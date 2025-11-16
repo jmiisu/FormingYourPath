@@ -20,8 +20,8 @@ public class MoveController : MonoBehaviour
     void Start()
     {
         //gridMap = GameObject.Find("Grid").GetComponent<Grid>();
-        Vector3 pos = gridMap.CellToWorld(cellPos) + new Vector3(0.5f, -6.6f);
-        Debug.Log(pos);
+        Vector3 pos = gridMap.CellToWorld(cellPos) + new Vector3(0.5f, -3.6f);
+        //Debug.Log(pos);
         transform.position = pos;
     }
 
@@ -33,7 +33,6 @@ public class MoveController : MonoBehaviour
         UpdateIsMoving();
     }
 
-    
 
     private void GetDirInput()
     {
@@ -57,7 +56,7 @@ public class MoveController : MonoBehaviour
     {
         if (!_isMoving) return;
 
-        Vector3 destPos = gridMap.CellToWorld(cellPos) + new Vector3(0.5f, -6.6f);
+        Vector3 destPos = gridMap.CellToWorld(cellPos) + new Vector3(0.5f, -3.6f);
         Vector3 moveDir = destPos - transform.position;
 
 

@@ -3,29 +3,25 @@ using UnityEngine;
 public class InteractController : MonoBehaviour
 {
     [SerializeField] private Camera sceneCamera;
-    [SerializeField] private LayerMask placementLayerMask;
+    [SerializeField] private Grid gridMap;   
     [SerializeField] private float zDepth = 0f;
-
-    private Vector3 lastPosition;
-
-    private void Awake()
-    {
-        var w = sceneCamera.ScreenToWorldPoint(Input.mousePosition);
-        w.z = zDepth;
-        lastPosition = w;
-    }
 
     public Vector3 GetSelectedMapPosition()
     {
-        Vector3 mousePos = Input.mousePosition;
-        mousePos.z = sceneCamera.nearClipPlane;
-        Ray ray = sceneCamera.ScreenPointToRay(mousePos);
-        RaycastHit hit;
+        if (sceneCamera == null) return Vector3.zero;
 
-        if (Physics.Raycast(ray, out hit, 100, placementLayerMask))
+        // 화면 좌표 -> 월드 좌표
+        Vector3 w = sceneCamera.ScreenToWorldPoint(Input.mousePosition);
+        w.z = zDepth;
+
+        // 그리드가 있으면 셀 중심으로 스냅
+        if (gridMap != null)
         {
-            lastPosition = hit.point;
+            Vector3Int cell = gridMap.WorldToCell(w);
+            w = gridMap.GetCellCenterWorld(cell);
+            w.z = zDepth;
         }
-        return lastPosition;
+
+        return w;
     }
 }
