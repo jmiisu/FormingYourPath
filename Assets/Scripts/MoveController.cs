@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem.LowLevel;
 
 public enum DIRECTION
 {
@@ -14,15 +15,16 @@ public class MoveController : MonoBehaviour
     Vector3Int cellPos = Vector3Int.zero;
     bool _isMoving = false;
 
+    public Vector3 curPos { get; private set; } // 현재 위치 3 * 3 맵에 필요
+
     DIRECTION _dir = DIRECTION.LEFT;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        //gridMap = GameObject.Find("Grid").GetComponent<Grid>();
         Vector3 pos = gridMap.CellToWorld(cellPos) + new Vector3(0.5f, -3.6f);
-        //Debug.Log(pos);
         transform.position = pos;
+        curPos = pos;
     }
 
     // Update is called once per frame
@@ -59,6 +61,9 @@ public class MoveController : MonoBehaviour
         Vector3 destPos = gridMap.CellToWorld(cellPos) + new Vector3(0.5f, -3.6f);
         Vector3 moveDir = destPos - transform.position;
 
+        if (!GridStateManager.i.canGo(destPos)) return;
+
+        curPos = destPos;
 
         float dist = moveDir.magnitude;
         if (dist < speed * Time.deltaTime)
@@ -71,6 +76,7 @@ public class MoveController : MonoBehaviour
             transform.position += moveDir.normalized * speed * Time.deltaTime;
             _isMoving = true;
         }
+
         GetComponentInChildren<Animator>().SetBool("isWalking", _isMoving);
 
     }
@@ -83,7 +89,6 @@ public class MoveController : MonoBehaviour
             {
                 case DIRECTION.LEFT:
                     cellPos += Vector3Int.left;
-                    
                     _isMoving = true;
                     break;
                 case DIRECTION.RIGHT:
