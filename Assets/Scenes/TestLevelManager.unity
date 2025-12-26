@@ -135,6 +135,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 7129062390473858720, guid: 4a383d15b1599364f946a02c60de7cc6, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8974822860163781245, guid: 4a383d15b1599364f946a02c60de7cc6, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -224,6 +228,17 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
+--- !u!114 &582785735 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5958477933937475574, guid: 4a383d15b1599364f946a02c60de7cc6, type: 3}
+  m_PrefabInstance: {fileID: 145835491}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73ba564bdd2acf54d83fc7a78208ac5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &704666585
 GameObject:
   m_ObjectHideFlags: 0
@@ -257,6 +272,7 @@ MonoBehaviour:
   - {fileID: 8058899170217760829, guid: c11ffc6230bec8247ad1584022e473c8, type: 3}
   - {fileID: 6896379610911882149, guid: f6273c25350a7404e91afc6b4bf3c719, type: 3}
   level: {fileID: 396095396}
+  playerMove: {fileID: 582785735}
 --- !u!4 &704666587
 Transform:
   m_ObjectHideFlags: 0
