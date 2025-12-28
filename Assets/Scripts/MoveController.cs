@@ -11,15 +11,14 @@ public class MoveController : MonoBehaviour
 {
     [SerializeField] float speed = 1f;
 
-    public Grid gridMap; // (현재 씬에 남아있어도 됨: 최소 수정)
     Vector3Int cellPos = Vector3Int.zero;
     bool _isMoving = false;
 
     public Vector3 curPos { get; private set; } // 현재 위치 3 * 3 맵에 필요
-
     DIRECTION _dir = DIRECTION.LEFT;
 
-    private LevelManager _level; // LevelManager 참조
+    private LevelManager _level;        // LevelManager 참조
+    private Check8DirectionComponent _check8Dir;
 
     // LevelManager가 스폰 셀을 알려줄 때 호출
     public void SetStartCell(Vector3Int startCell, LevelManager level)
@@ -39,14 +38,19 @@ public class MoveController : MonoBehaviour
         // 최소 수정: LevelManager가 SetStartCell로 덮어쓰는 구조지만,
         // 혹시 호출 타이밍이 꼬일 때를 대비해 참조만 잡아둠
         if (_level == null)
-            _level = FindAnyObjectByType<LevelManager>();
-
-        // 기존 Start 위치 세팅은 "임시"로만 남겨둠 (SetStartCell이 오면 덮어씀)
-        if (_level != null)
         {
-            Vector3 pos = CellToWorld(cellPos);
-            transform.position = pos;
-            curPos = pos;
+            _level = FindAnyObjectByType<LevelManager>();
+        }
+
+        if (_check8Dir == null)
+        {
+            _check8Dir = GetComponent<Check8DirectionComponent>();
+        }
+
+        if (_check8Dir != null)
+        {
+            _check8Dir.Update8Direction(cellPos);
+            _check8Dir.DumpArea();
         }
     }
 
@@ -117,7 +121,6 @@ public class MoveController : MonoBehaviour
     private void UpdateIsMoving()
     {
         if (_isMoving) return;
-        if (_level == null) return;
 
         Vector3Int next = cellPos;
 
@@ -133,11 +136,18 @@ public class MoveController : MonoBehaviour
                 return;
         }
 
-        // 이동 가능 여부는 LevelManager에게 질의
-        if (!_level.IsWalkable(new Vector2Int(next.x, next.y)))
-            return;
+        // 이동 가능 여부는 GridStateManager에게 질의
+        if (GridStateManager.i == null) return;
+
+        if (!GridStateManager.i.IsWalkable(new Vector2Int(next.x, next.y))) return;
 
         cellPos = next;
         _isMoving = true;
+
+        if (_check8Dir != null)
+        {
+            _check8Dir.Update8Direction(cellPos);
+            _check8Dir.DumpArea();
+        }
     }
 }
