@@ -4,17 +4,49 @@ using UnityEngine;
 public class Check8DirectionComponent : MonoBehaviour
 {
     private readonly MAP_STATE[,] curStateArea = new MAP_STATE[3, 3];
+
     [Header("References")]
     [SerializeField] private Grid gridMap;
 
     // 임시로 디버깅용 UI
     [SerializeField] TMP_Text[] arrState;
 
+    private void OnEnable()
+    {
+        if (GridStateManager.i != null)
+            GridStateManager.i.OnCellChanged += HandleCellChanged;
+    }
+
+    private void OnDisable()
+    {
+        if (GridStateManager.i != null)
+            GridStateManager.i.OnCellChanged -= HandleCellChanged;
+    }
+
+    private void HandleCellChanged(Vector2Int changedCell, MAP_STATE newState)
+    {
+        if (gridMap == null) return;
+
+        // 이 컴포넌트가 "플레이어에 붙어있다"는 전제
+        Vector3Int playerCell3 = gridMap.WorldToCell(transform.position);
+        var playerCell = new Vector2Int(playerCell3.x, playerCell3.y);
+
+        // 주변 1칸(3x3)에 영향이 있으면 갱신
+        int dx = changedCell.x - playerCell.x;
+        int dy = -changedCell.y + playerCell.y;
+
+        if (Mathf.Abs(dx) <= 1 && Mathf.Abs(dy) <= 1)
+        {
+            Update8Direction(playerCell);
+            DumpArea();
+        }
+    }
+
     /// <summary>
     /// 플레이어 셀 좌표 3 x 3 상태 스냅샷을 갱신
     /// </summary>    
 
-    public void Update8Direction(Vector3Int curPlayerPos)
+    public void Update8Direction(Vector2Int curPlayerPos)
     {
         for (int dy = -1; dy <= 1; dy++)
         {
@@ -44,19 +76,6 @@ public class Check8DirectionComponent : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// (dx, dy) 칸으로 이동 가능한지 3x3 스냅샷 기준으로 판단
-    /// </summary>
-    /// 
-
-    public bool CanMove(Vector3Int curPlayerPos, Vector2Int dir)
-    {
-        if (GridStateManager.i == null) return false;
-
-        Vector2Int next = new Vector2Int(curPlayerPos.x + dir.x, curPlayerPos.y + dir.y);
-        return GridStateManager.i.IsWalkable(next);
-    }
-
     public void DumpArea()
     {
         for (int y = 0; y < 3; y++)
@@ -66,9 +85,5 @@ public class Check8DirectionComponent : MonoBehaviour
                 arrState[y * 3 + x].text = curStateArea[y, x].ToString();
             }
         }
-        //return
-        //    $"{curStateArea[0, 0]}\t{curStateArea[0, 1]}\t{curStateArea[0, 2]}\n" +
-        //    $"{curStateArea[1, 0]}\t{curStateArea[1, 1]}\t{curStateArea[1, 2]}\n" +
-        //    $"{curStateArea[2, 0]}\t{curStateArea[2, 1]}\t{curStateArea[2, 2]}\n";
     }
 }

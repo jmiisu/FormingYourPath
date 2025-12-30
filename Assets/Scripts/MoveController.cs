@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.InputSystem.LowLevel;
 
 public enum DIRECTION
 {
@@ -11,7 +10,7 @@ public class MoveController : MonoBehaviour
 {
     [SerializeField] float speed = 1f;
 
-    Vector3Int cellPos = Vector3Int.zero;
+    Vector2Int cellPos = Vector2Int.zero;
     bool _isMoving = false;
 
     public Vector3 curPos { get; private set; } // 현재 위치 3 * 3 맵에 필요
@@ -21,16 +20,23 @@ public class MoveController : MonoBehaviour
     private Check8DirectionComponent _check8Dir;
 
     // LevelManager가 스폰 셀을 알려줄 때 호출
-    public void SetStartCell(Vector3Int startCell, LevelManager level)
+    public void SetStartCell(Vector2Int startCell, LevelManager level)
     {
         _level = level;
         cellPos = startCell;
 
-        Vector3 pos = CellToWorld(cellPos);
+        Vector2 pos = CellToWorld(cellPos);
         transform.position = pos;
         curPos = pos;
 
         _isMoving = false;
+
+        if (_check8Dir == null) _check8Dir = GetComponent<Check8DirectionComponent>();
+        if (_check8Dir != null)
+        {
+            _check8Dir.Update8Direction(cellPos); 
+            _check8Dir.DumpArea();
+        }
     }
 
     void Start()
@@ -49,7 +55,7 @@ public class MoveController : MonoBehaviour
 
         if (_check8Dir != null)
         {
-            _check8Dir.Update8Direction(cellPos);
+            _check8Dir.Update8Direction(new Vector2Int(cellPos.x, cellPos.y));
             _check8Dir.DumpArea();
         }
     }
@@ -80,15 +86,16 @@ public class MoveController : MonoBehaviour
     }
 
     // LevelManager의 WorldStart/TileSize 기준으로 셀→월드 변환 (하드 오프셋 제거)
-    private Vector3 CellToWorld(Vector3Int cell)
+    private Vector2 CellToWorld(Vector2Int cell)
     {
         if (_level == null)
-            return transform.position; // 안전장치
+        {
+            Debug.LogError("LevelManager가 없습니다!");
+        }
 
-        return new Vector3(
+        return new Vector2(
             _level.WorldStart.x + (_level.TileSize * cell.x),
-            _level.WorldStart.y - (_level.TileSize * cell.y),
-            transform.position.z
+            _level.WorldStart.y - (_level.TileSize * cell.y)
         );
     }
 
@@ -122,15 +129,15 @@ public class MoveController : MonoBehaviour
     {
         if (_isMoving) return;
 
-        Vector3Int next = cellPos;
+        Vector2Int next = cellPos;
 
         switch (_dir)
         {
             case DIRECTION.LEFT:
-                next += Vector3Int.left;
+                next += Vector2Int.left;
                 break;
             case DIRECTION.RIGHT:
-                next += Vector3Int.right;
+                next += Vector2Int.right;
                 break;
             default:
                 return;

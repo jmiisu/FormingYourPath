@@ -138,7 +138,7 @@ public class LevelManager : MonoBehaviour
         }
 
         // 시작 셀을 넘겨서 플레이어 위치를 맵 좌표계에 맞게 스냅
-        playerMove.SetStartCell(new Vector3Int(SpawnCell.x, SpawnCell.y, 0), this);
+        playerMove.SetStartCell(new Vector2Int(SpawnCell.x, SpawnCell.y), this);
     }
 
     private string[] ReadLevelText()
