@@ -5,26 +5,72 @@ public class PlacementController : MonoBehaviour
     [Header("Refs")]
     [SerializeField] private GameObject mouseIndicator;
     [SerializeField] private InteractController interactController;
-    [SerializeField] private Grid gridMap;
+    //[SerializeField] private Grid gridMap;
     [SerializeField] private Transform player;
-    [SerializeField] private GameObject blockPrefab;
     [SerializeField] private LevelManager _level;
+
+    [Header("Inventory")]
+    [SerializeField] private InventoryController inventory;
+
+    [Header("Prefabs")]
+    [SerializeField] private GameObject basicBlockPrefab;
+    [SerializeField] private GameObject stairBlockPrefab;
 
     [Header("Placement")]
     [SerializeField] private MAP_STATE placedState = MAP_STATE.BASIC;
 
     private SpriteRenderer indicatorSR;
+    private SpriteRenderer blockCarried;
 
     private void Awake()
     {
-        _level = FindAnyObjectByType<LevelManager>();
+        //_level = FindAnyObjectByType<LevelManager>();
         if (mouseIndicator != null)
         {
-            // 자식까지 포함해서 SpriteRenderer 찾기
             indicatorSR = mouseIndicator.GetComponentInChildren<SpriteRenderer>(true);
             mouseIndicator.SetActive(true);  // 항상 켜두고 색으로만 상태 표시
-            //Debug.Log(indicatorSR);          // 제대로 찾는지 한 번만 로그
         }
+
+        blockCarried = player.GetChild(1).gameObject.GetComponent<SpriteRenderer>();
+        Debug.Log(blockCarried);
+    }
+
+    public void SetCarriedVisible(bool visible)
+    {
+        if (blockCarried == null) return;
+        blockCarried.enabled = visible;
+    }
+
+    public void SetSelectedBlock(MAP_STATE state)
+    {
+        if (state != MAP_STATE.BASIC && state != MAP_STATE.STAIR) return;
+        placedState = state;
+        ShowBlock(placedState);
+    }
+
+    public void ShowBlock(MAP_STATE state /*int amount*/)
+    {
+        if (inventory != null && inventory.GetCount(state) <= 0)
+        {
+            SetCarriedVisible(false);
+            return;
+        }
+
+        if (!blockCarried.enabled) SetCarriedVisible(true);
+
+        if (state == MAP_STATE.BASIC)
+        {
+            blockCarried.sprite = basicBlockPrefab.GetComponentInChildren<SpriteRenderer>().sprite;
+        }
+        else if (state == MAP_STATE.STAIR)
+        {
+            blockCarried.sprite = stairBlockPrefab.GetComponentInChildren<SpriteRenderer>().sprite;
+        }
+    }
+
+    private GameObject GetSelectedPrefab()
+    {
+        return placedState == MAP_STATE.STAIR ? stairBlockPrefab : basicBlockPrefab;
     }
 
     private Vector2Int WorldToMapCell(Vector3 world)
@@ -39,22 +85,26 @@ public class PlacementController : MonoBehaviour
 
     private void Update()
     {
-        if (mouseIndicator == null || interactController == null ||
-            gridMap == null || player == null)
+        if (mouseIndicator == null || interactController == null || player == null)
             return;
 
         if (GridStateManager.i == null) return;
 
         // 1) 마우스 위치(그리드 스냅된 월드 좌표)
         Vector3 worldPos = interactController.GetSelectedMapPosition();
-        mouseIndicator.transform.position = worldPos;
 
         // 2) 셀 좌표 계산
-        Vector3Int mouseCell_3 = gridMap.WorldToCell(worldPos);
-        Vector3Int playerCell_3 = gridMap.WorldToCell(player.position);
 
         Vector2Int mouseCell = WorldToMapCell(worldPos);
         Vector2Int playerCell = WorldToMapCell(player.position);
+
+        Vector3 placePos = new Vector3(
+            _level.WorldStart.x + _level.TileSize * mouseCell.x,
+            _level.WorldStart.y - _level.TileSize * mouseCell.y,
+            0
+        );
+
+        mouseIndicator.transform.position = placePos;
 
         int dx = mouseCell.x - playerCell.x;
         int dy = mouseCell.y - playerCell.y;
@@ -69,22 +119,36 @@ public class PlacementController : MonoBehaviour
 
         bool canPlace = nearRule && inside && isEmpty;
 
+        bool isPlacedBlock = hasState && GridStateManager.i.IsThereBlockYouPlaced(mouseCell);
+        bool canRemove = nearRule && inside && isPlacedBlock;
+
         // 4) 색상으로 가능/불가 표시
         if (indicatorSR != null)
         {
-            indicatorSR.color = canPlace ? Color.green : Color.red;
+            if (canPlace) indicatorSR.color = Color.green;
+            else if (canRemove) indicatorSR.color = Color.yellow;
+            else indicatorSR.color = Color.red;
         }
 
         // 5) 좌클릭 시 설치
-        if (canPlace && Input.GetMouseButtonDown(0) && blockPrefab != null)
+        if (canPlace && Input.GetMouseButtonDown(0))
         {
-            Debug.Log("PLACE!");
-            Vector3 placePos = gridMap.GetCellCenterWorld(mouseCell_3);
+            if (inventory != null && !inventory.TryConsume(placedState))
+            {
+                // 0개일때 숨김
+                SetCarriedVisible(false);
+                return;
+            }
+            GameObject blockPlaced = GetSelectedPrefab();
 
-            GameObject placed = Instantiate(blockPrefab, placePos, Quaternion.identity);
+            Debug.Log("PLACE!");
+            
+
+            // 프리팹 가져오기
+            GameObject placed = Instantiate(blockPlaced, placePos, Quaternion.identity);
             placed.transform.SetParent(_level.transform);
 
-            GridStateManager.i.SetState(mouseCell, placedState);
+            GridStateManager.i.RegisterPlacedBlock(mouseCell, placedState, placed);
 
             Check8DirectionComponent check = player.GetComponent<Check8DirectionComponent>();
             if (check != null)
@@ -94,6 +158,24 @@ public class PlacementController : MonoBehaviour
             }
         }
 
-        //Debug.Log($"mouseCell={mouseCell}, inside={inside}, hasState={hasState}, state={(hasState ? state.ToString() : "NONE")}, nearRule={nearRule}");
+        if (canRemove && Input.GetMouseButtonDown(1)) // 우클릭 시 제거 (단, 기존 스테이지 블록은 제외)
+        {
+            if (GridStateManager.i.TryRemovePlacedBlock(mouseCell, out var removedObj))
+            {
+                Debug.Log("REMOVED!");
+                if (removedObj != null && inventory.TryRetrieve(state))
+                {
+                    Destroy(removedObj);                    
+                }
+
+                var check = player.GetComponent<Check8DirectionComponent>();
+
+                if (check != null)
+                {
+                    check.Update8Direction(playerCell);
+                    check.DumpArea();
+                }
+            }
+        }
     }
 }

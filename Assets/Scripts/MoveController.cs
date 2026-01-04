@@ -12,6 +12,8 @@ public class MoveController : MonoBehaviour
 
     Vector2Int cellPos = Vector2Int.zero;
     bool _isMoving = false;
+    bool _isJumping = false;
+    bool _waitingReachExit = false; // 출구 도착까지 대기
 
     public Vector3 curPos { get; private set; } // 현재 위치 3 * 3 맵에 필요
     DIRECTION _dir = DIRECTION.LEFT;
@@ -30,6 +32,7 @@ public class MoveController : MonoBehaviour
         curPos = pos;
 
         _isMoving = false;
+        _isJumping = false;
 
         if (_check8Dir == null) _check8Dir = GetComponent<Check8DirectionComponent>();
         if (_check8Dir != null)
@@ -63,8 +66,14 @@ public class MoveController : MonoBehaviour
     void Update()
     {
         GetDirInput();
+        if (!_isMoving && !_isJumping)
+        {
+            if (!TryJumpMove())
+            {
+                if (!TryStairDownFromUnderfoot()) TryWalkMove();
+            }
+        }
         UpdatePosition();
-        UpdateIsMoving();
     }
 
     private void GetDirInput()
@@ -115,6 +124,14 @@ public class MoveController : MonoBehaviour
         {
             transform.position = destPos;
             _isMoving = false;
+            _isJumping = false;
+
+            // 출구 도착 이후 클리어 처리
+            if (_waitingReachExit)
+            {
+                _waitingReachExit = false;
+                _level?.OnPlayerReachedExit();
+            }
         }
         else
         {
@@ -125,10 +142,8 @@ public class MoveController : MonoBehaviour
         GetComponentInChildren<Animator>().SetBool("isWalking", _isMoving);
     }
 
-    private void UpdateIsMoving()
+    private void TryWalkMove()
     {
-        if (_isMoving) return;
-
         Vector2Int next = cellPos;
 
         switch (_dir)
@@ -146,9 +161,83 @@ public class MoveController : MonoBehaviour
         // 이동 가능 여부는 GridStateManager에게 질의
         if (GridStateManager.i == null) return;
 
-        if (!GridStateManager.i.IsWalkable(new Vector2Int(next.x, next.y))) return;
+        if (!GridStateManager.i.IsWalkable(next)) return;
+
+        MoveTo(next);
+    }
+
+    private bool TryJumpMove()
+    {
+        Vector2Int stairCell = cellPos;
+        Vector2Int jumpCell = cellPos;
+
+        switch (_dir)
+        {
+            case DIRECTION.LEFT:
+                stairCell += Vector2Int.left;
+                jumpCell += new Vector2Int(-1, -1);
+                break;
+            case DIRECTION.RIGHT:
+                stairCell += Vector2Int.right;
+                jumpCell += new Vector2Int(1, -1);
+                break;
+            default:
+                return false;
+        }
+
+        // 이동 가능 여부는 GridStateManager에게 질의
+        if (GridStateManager.i == null) return false;
+
+        if (!GridStateManager.i.TryGetState(stairCell, out var stairState)) return false;
+        if (stairState != MAP_STATE.STAIR) return false;
+
+        if (!GridStateManager.i.IsWalkable(jumpCell)) return false;
+
+        _isJumping = true;
+        MoveTo(jumpCell);
+        return true;
+    }
+
+    private bool IsPassableIgnoreFloor(Vector2Int cell)
+    {
+        if (GridStateManager.i == null) return false;
+        if (!GridStateManager.i.TryGetState(cell, out var s)) return false;
+
+        // 막힌 타일만 제외
+        return s != MAP_STATE.STAGE_BLOCK && s != MAP_STATE.BASIC;
+    }
+
+    private bool TryStairDownFromUnderfoot()
+    {
+        if (_dir == DIRECTION.NONE) return false;
+        if (GridStateManager.i == null) return false;
+
+        // 발밑이 STAIR인가
+        Vector2Int under = cellPos + new Vector2Int(0, 1);
+        if (!GridStateManager.i.TryGetState(under, out var underState)) return false;
+        if (underState != MAP_STATE.STAIR) return false;
+
+        // 내려갈 목적지: 대각선 아래 (y+1)
+        Vector2Int downCell = cellPos + (_dir == DIRECTION.LEFT ? new Vector2Int(-1, 1) : new Vector2Int(1, 1));
+
+        // 계단 내려갈 때는 경사라서 "바닥 조건"을 완화해서 통과만 체크
+        if (!IsPassableIgnoreFloor(downCell)) return false;
+
+        // 이동 처리
+        MoveTo(downCell);
+        return true;
+    }
+
+    private void MoveTo(Vector2Int next)
+    {
+        bool isExitMove = false;
+        if (GridStateManager.i.TryGetState(next, out var state) && state == MAP_STATE.EXIT)
+        {
+            isExitMove = true;
+        }
 
         cellPos = next;
+        _waitingReachExit = isExitMove;
         _isMoving = true;
 
         if (_check8Dir != null)
@@ -157,4 +246,5 @@ public class MoveController : MonoBehaviour
             _check8Dir.DumpArea();
         }
     }
+
 }

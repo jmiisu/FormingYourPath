@@ -14,13 +14,17 @@ public class Check8DirectionComponent : MonoBehaviour
     private void OnEnable()
     {
         if (GridStateManager.i != null)
+        { 
             GridStateManager.i.OnCellChanged += HandleCellChanged;
+        }
     }
 
     private void OnDisable()
     {
         if (GridStateManager.i != null)
+        {
             GridStateManager.i.OnCellChanged -= HandleCellChanged;
+        }
     }
 
     private void HandleCellChanged(Vector2Int changedCell, MAP_STATE newState)

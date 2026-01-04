@@ -6,7 +6,8 @@ public class GridStateManager : MonoBehaviour
 {
     public static GridStateManager i;
 
-    private Dictionary<Vector2Int, MAP_STATE> _map = new Dictionary<Vector2Int, MAP_STATE>();
+    private Dictionary<Vector2Int, MAP_STATE> _map = new();
+    private Dictionary<Vector2Int, GameObject> _placedObjByCell = new(); // 설치한 블록 데이터
     private int _width;
     private int _height;
 
@@ -39,7 +40,9 @@ public class GridStateManager : MonoBehaviour
     {
         if (!TryGetState(cellBelow, out var belowState)) return false; // 맵 밖
 
-        return belowState == MAP_STATE.STAGE_BLOCK || belowState == MAP_STATE.BASIC;
+        return belowState == MAP_STATE.STAGE_BLOCK 
+            || belowState == MAP_STATE.BASIC 
+            || belowState == MAP_STATE.STAIR;
     }
 
     public bool TryGetState(Vector2Int cell, out MAP_STATE state)
@@ -49,6 +52,13 @@ public class GridStateManager : MonoBehaviour
         if (!IsInside(cell)) return false;
 
         return _map.TryGetValue(cell, out state);
+    }
+
+    public bool IsThereBlockYouPlaced(Vector2Int cell)
+    {
+        if (!TryGetState(cell, out var state)) return false;
+
+        return state == MAP_STATE.BASIC || state == MAP_STATE.STAIR;
     }
 
     // 이동 가능 규칙
@@ -75,6 +85,53 @@ public class GridStateManager : MonoBehaviour
 
         _map[cell] = newState;
         OnCellChanged?.Invoke(cell, newState);
+        return true;
+    }
+
+    public bool RegisterPlacedBlock(Vector2Int cell, MAP_STATE placedState, GameObject placedObj)
+    {
+        if (!IsInside(cell)) return false;
+
+        if (placedObj == null) return false;
+
+        if (placedState != MAP_STATE.BASIC && placedState != MAP_STATE.STAIR) return false;
+
+        if (_placedObjByCell.TryGetValue(cell, out var prev) && prev != null)
+        {
+            Destroy(prev);
+        }
+
+        _placedObjByCell[cell] = placedObj;
+        _map[cell] = placedState;
+        OnCellChanged?.Invoke(cell, placedState);
+        return true;
+    }
+
+    public bool TryRemovePlacedBlock(Vector2Int cell, out GameObject removedObj)
+    {
+        removedObj = null;
+
+        if (!IsInside(cell))
+        {
+            Debug.Log("OUTSIDE!");
+            return false;
+        }
+            
+        if (!IsThereBlockYouPlaced(cell))
+        {
+            Debug.Log("NO BLOCK YOU PLACED!");
+            return false;
+        }
+
+        if (!_placedObjByCell.TryGetValue(cell, out removedObj))
+        {
+            Debug.Log("NO VALUE");
+            return false;
+        }
+
+        _placedObjByCell.Remove(cell);
+        _map[cell] = MAP_STATE.EMPTY;
+        OnCellChanged?.Invoke(cell, MAP_STATE.EMPTY);
         return true;
     }
 }

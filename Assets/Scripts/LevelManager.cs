@@ -141,12 +141,21 @@ public class LevelManager : MonoBehaviour
         playerMove.SetStartCell(new Vector2Int(SpawnCell.x, SpawnCell.y), this);
     }
 
+    public void OnPlayerReachedExit()
+    {
+        Debug.Log("스테이지 클리어!");
+
+        playerMove.enabled = false;
+    }
+
     private string[] ReadLevelText()
     {
-        TextAsset bindData = Resources.Load("LevelText\\Tutorial_2") as TextAsset;
+        TextAsset bindData = Resources.Load("LevelText\\Tutorial_3") as TextAsset;
 
         string data = bindData.text.Replace(Environment.NewLine, string.Empty);
 
         return data.Split('-');
     }
+
+
 }
