@@ -193,6 +193,12 @@ public class MoveController : MonoBehaviour
 
         if (!GridStateManager.i.IsWalkable(jumpCell)) return false;
 
+        if (!GridStateManager.i.TryGetStairDir(stairCell, out var sdir)) return false;
+
+        // 방향 체크
+        if (_dir == DIRECTION.LEFT && sdir != STAIR_DIR.LEFT) return false;
+        if (_dir == DIRECTION.RIGHT && sdir != STAIR_DIR.RIGHT) return false;
+
         _isJumping = true;
         MoveTo(jumpCell);
         return true;
@@ -222,6 +228,14 @@ public class MoveController : MonoBehaviour
 
         // 계단 내려갈 때는 경사라서 "바닥 조건"을 완화해서 통과만 체크
         if (!IsPassableIgnoreFloor(downCell)) return false;
+
+        if (!GridStateManager.i.TryGetStairDir(under, out var sdir)) return false;
+
+        // RIGHT = 오른쪽이 높은 계단 => 왼쪽이 낮음 => LEFT로만 내려감
+        if (sdir == STAIR_DIR.RIGHT && _dir != DIRECTION.LEFT) return false;
+        // LEFT = 왼쪽이 높은 계단 => 오른쪽이 낮음 => RIGHT로만 내려감
+        if (sdir == STAIR_DIR.LEFT && _dir != DIRECTION.RIGHT) return false;
+
 
         // 이동 처리
         MoveTo(downCell);

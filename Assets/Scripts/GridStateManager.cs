@@ -134,4 +134,28 @@ public class GridStateManager : MonoBehaviour
         OnCellChanged?.Invoke(cell, MAP_STATE.EMPTY);
         return true;
     }
+
+    public bool TryGetPlacedObject(Vector2Int cell, out GameObject obj)
+    {
+        obj = null;
+        if (!_placedObjByCell.TryGetValue(cell, out obj)) return false; // 너가 가진 자료구조 이름에 맞춰 수정
+        return obj != null;
+    }
+
+    public bool TryGetStairDir(Vector2Int cell, out STAIR_DIR dir)
+    {
+        dir = STAIR_DIR.RIGHT;
+
+        if (!TryGetState(cell, out var s) || s != MAP_STATE.STAIR) return false;
+        if (!TryGetPlacedObject(cell, out var obj) || obj == null) return false;
+
+        var stair = obj.GetComponent<StairComponent>();
+        if (stair == null) return false;
+
+        dir = stair.Dir;
+        return true;
+    }
+
+
+
 }
