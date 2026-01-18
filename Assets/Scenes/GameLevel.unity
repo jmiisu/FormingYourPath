@@ -148,8 +148,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a07901f4cad619a43a27cf634db7189f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  totalStageCount: 3
-  currentStageIndex: 2
+  totalStageCount: 5
+  currentStageIndex: 3
 --- !u!4 &29076540
 Transform:
   m_ObjectHideFlags: 0
