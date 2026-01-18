@@ -139,16 +139,34 @@ public class PlacementController : MonoBehaviour
                 SetCarriedVisible(false);
                 return;
             }
-            GameObject blockPlaced = GetSelectedPrefab();
 
-            Debug.Log("PLACE!");
-            
+            // 풀에서 꺼내서 배치
+            GameObject placed = InventoryPoolComponent.i.UseBlock(placedState, placePos, _level.transform);
+            //GameObject blockPlaced = GetSelectedPrefab();
 
+<<<<<<< Updated upstream
             // 프리팹 가져오기
             GameObject placed = Instantiate(blockPlaced, placePos, Quaternion.identity);
             placed.transform.SetParent(_level.transform);
 
             GridStateManager.i.RegisterPlacedBlock(mouseCell, placedState, placed);
+=======
+            // 계단 방향 적용
+            if (placedState == MAP_STATE.STAIR)
+            {
+                var stairComp = placed.GetComponent<StairComponent>();
+                if (stairComp != null) stairComp.SetDir(stairDir);
+            }
+
+            // 그리드 등록 + 덮어쓰기
+            if (GridStateManager.i.RegisterPlacedBlock(mouseCell, placedState, placed, out var prevObj, out var prevState))
+            {
+                if (prevObj != null && (prevState == MAP_STATE.BASIC || prevState == MAP_STATE.STAIR))
+                {
+                    InventoryPoolComponent.i.RetreiveBlock(prevState, prevObj);
+                }
+            }
+>>>>>>> Stashed changes
 
             Check8DirectionComponent check = player.GetComponent<Check8DirectionComponent>();
             if (check != null)
@@ -160,13 +178,15 @@ public class PlacementController : MonoBehaviour
 
         if (canRemove && Input.GetMouseButtonDown(1)) // 우클릭 시 제거 (단, 기존 스테이지 블록은 제외)
         {
-            if (GridStateManager.i.TryRemovePlacedBlock(mouseCell, out var removedObj))
+            if (GridStateManager.i.TryRemovePlacedBlock(mouseCell, out var removedObj, out var removedState))
             {
-                Debug.Log("REMOVED!");
-                if (removedObj != null && inventory.TryRetrieve(state))
+                //Debug.Log("REMOVED!");
+                if (removedObj != null)
                 {
-                    Destroy(removedObj);                    
+                    InventoryPoolComponent.i.RetreiveBlock(state, removedObj);                    
                 }
+
+                inventory?.TryRetrieve(removedState);
 
                 var check = player.GetComponent<Check8DirectionComponent>();
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.MPE;
 using UnityEngine;
 
 public class GridStateManager : MonoBehaviour
@@ -88,17 +89,22 @@ public class GridStateManager : MonoBehaviour
         return true;
     }
 
-    public bool RegisterPlacedBlock(Vector2Int cell, MAP_STATE placedState, GameObject placedObj)
+    public bool RegisterPlacedBlock(Vector2Int cell, MAP_STATE placedState, GameObject placedObj, out GameObject prevObj, out MAP_STATE prevState)
     {
+        prevObj = null;
+        prevState = MAP_STATE.EMPTY;
+
         if (!IsInside(cell)) return false;
 
         if (placedObj == null) return false;
 
         if (placedState != MAP_STATE.BASIC && placedState != MAP_STATE.STAIR) return false;
 
+        // 이전 정보는 밖으로 넘김
         if (_placedObjByCell.TryGetValue(cell, out var prev) && prev != null)
         {
-            Destroy(prev);
+            prevObj = prev;
+            _map.TryGetValue(cell, out prevState);
         }
 
         _placedObjByCell[cell] = placedObj;
@@ -107,9 +113,10 @@ public class GridStateManager : MonoBehaviour
         return true;
     }
 
-    public bool TryRemovePlacedBlock(Vector2Int cell, out GameObject removedObj)
+    public bool TryRemovePlacedBlock(Vector2Int cell, out GameObject removedObj, out MAP_STATE removedState)
     {
         removedObj = null;
+        removedState = MAP_STATE.EMPTY;
 
         if (!IsInside(cell))
         {
@@ -128,6 +135,8 @@ public class GridStateManager : MonoBehaviour
             Debug.Log("NO VALUE");
             return false;
         }
+
+        _map.TryGetValue(cell, out removedState);
 
         _placedObjByCell.Remove(cell);
         _map[cell] = MAP_STATE.EMPTY;
