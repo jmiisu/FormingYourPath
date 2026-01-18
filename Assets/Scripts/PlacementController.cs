@@ -29,7 +29,7 @@ public class PlacementController : MonoBehaviour
         if (mouseIndicator != null)
         {
             indicatorSR = mouseIndicator.GetComponentInChildren<SpriteRenderer>(true);
-            mouseIndicator.SetActive(true);  // �׻� �ѵΰ� �����θ� ���� ǥ��
+            mouseIndicator.SetActive(true);  // 항상 켜두고 색으로만 상태 표시
         }
 
         blockCarried = player.GetChild(1).gameObject.GetComponent<SpriteRenderer>();
@@ -81,7 +81,7 @@ public class PlacementController : MonoBehaviour
         Vector3 ws = _level.WorldStart;
 
         int x = Mathf.RoundToInt((world.x - ws.x) / ts);
-        int y = Mathf.RoundToInt((ws.y - world.y) / ts); // y ���� ���� (�Ʒ��� ������ +)
+        int y = Mathf.RoundToInt((ws.y - world.y) / ts); // y 반전 포함 (아래로 갈수록 +)
         return new Vector2Int(x, y);
     }
 
@@ -92,10 +92,10 @@ public class PlacementController : MonoBehaviour
 
         if (GridStateManager.i == null) return;
 
-        // 1) ���콺 ��ġ(�׸��� ������ ���� ��ǥ)
+        // 1) 마우스 위치(그리드 스냅된 월드 좌표)
         Vector3 worldPos = interactController.GetSelectedMapPosition();
 
-        // 2) �� ��ǥ ���
+        // 2) 셀 좌표 계산
 
         Vector2Int mouseCell = WorldToMapCell(worldPos);
         Vector2Int playerCell = WorldToMapCell(player.position);
@@ -111,8 +111,8 @@ public class PlacementController : MonoBehaviour
         int dx = mouseCell.x - playerCell.x;
         int dy = mouseCell.y - playerCell.y;
 
-        // 3) �÷��̾� �ֺ� 6ĭ�� ���
-        // (��1, -1/0/1), �ڱ� �ڸ�(0,0)�� ����
+        // 3) 플레이어 주변 6칸만 허용
+        // (±1, -1/0/1), 자기 자리(0,0)는 제외
         bool nearRule = (Mathf.Abs(dx) == 1 && Mathf.Abs(dy) <= 1);
 
         bool inside = GridStateManager.i.IsInside(mouseCell);
@@ -124,7 +124,7 @@ public class PlacementController : MonoBehaviour
         bool isPlacedBlock = hasState && GridStateManager.i.IsThereBlockYouPlaced(mouseCell);
         bool canRemove = nearRule && inside && isPlacedBlock;
 
-        // 4) �������� ����/�Ұ� ǥ��
+        // 4) 색상으로 가능/불가 표시
         if (indicatorSR != null)
         {
             if (canPlace) indicatorSR.color = Color.green;
@@ -138,28 +138,28 @@ public class PlacementController : MonoBehaviour
             ShowBlock(MAP_STATE.STAIR);
         }
 
-        // 5) ��Ŭ�� �� ��ġ
+        // 5) 좌클릭 시 설치
         if (canPlace && Input.GetMouseButtonDown(0))
         {
             if (inventory != null && !inventory.TryConsume(placedState))
             {
-                // 0���϶� ����
+                // 0개일때 숨김
                 SetCarriedVisible(false);
                 return;
             }
 
-            // Ǯ���� ������ ��ġ
+            // 풀에서 꺼내서 배치
             GameObject placed = InventoryPoolComponent.i.UseBlock(placedState, placePos, _level.transform);
             //GameObject blockPlaced = GetSelectedPrefab();
 
-            // ��� ���� ����
+            // 계단 방향 적용
             if (placedState == MAP_STATE.STAIR)
             {
                 var stairComp = placed.GetComponent<StairComponent>();
                 if (stairComp != null) stairComp.SetDir(stairDir);
             }
 
-            // �׸��� ��� + �����
+            // 그리드 등록 + 덮어쓰기
             if (GridStateManager.i.RegisterPlacedBlock(mouseCell, placedState, placed, out var prevObj, out var prevState))
             {
                 if (prevObj != null && (prevState == MAP_STATE.BASIC || prevState == MAP_STATE.STAIR))
@@ -176,7 +176,7 @@ public class PlacementController : MonoBehaviour
             }
         }
 
-        if (canRemove && Input.GetMouseButtonDown(1)) // ��Ŭ�� �� ���� (��, ���� �������� ������ ����)
+        if (canRemove && Input.GetMouseButtonDown(1)) // 우클릭 시 제거 (단, 기존 스테이지 블록은 제외)
         {
             if (GridStateManager.i.TryRemovePlacedBlock(mouseCell, out var removedObj, out var removedState))
             {

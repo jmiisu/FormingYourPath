@@ -8,7 +8,7 @@ public class GridStateManager : MonoBehaviour
     public static GridStateManager i;
 
     private Dictionary<Vector2Int, MAP_STATE> _map = new();
-    private Dictionary<Vector2Int, GameObject> _placedObjByCell = new(); // ��ġ�� ���� ������
+    private Dictionary<Vector2Int, GameObject> _placedObjByCell = new(); // 설치한 블록 데이터
     private int _width;
     private int _height;
 
@@ -31,7 +31,7 @@ public class GridStateManager : MonoBehaviour
         _height = height;
     }
 
-    // ���� �ȿ� ����ִ���
+    // 범위 안에 들어있는지
     public bool IsInside(Vector2Int cell)
     {
         return (cell.x >= 0 && cell.x < _width && cell.y >= 0 && cell.y < _height);
@@ -39,7 +39,7 @@ public class GridStateManager : MonoBehaviour
 
     public bool IsThereFloor(Vector2Int cellBelow)
     {
-        if (!TryGetState(cellBelow, out var belowState)) return false; // �� ��
+        if (!TryGetState(cellBelow, out var belowState)) return false; // 맵 밖
 
         return belowState == MAP_STATE.STAGE_BLOCK 
             || belowState == MAP_STATE.BASIC 
@@ -62,18 +62,18 @@ public class GridStateManager : MonoBehaviour
         return state == MAP_STATE.BASIC || state == MAP_STATE.STAIR;
     }
 
-    // �̵� ���� ��Ģ
+    // 이동 가능 규칙
     public bool IsWalkable(Vector2Int cell)
     {
-        if (!TryGetState(cell, out var state)) return false; // �� ��
+        if (!TryGetState(cell, out var state)) return false; // 맵 밖
 
-        // �ּ� ��Ģ: ���� ������ �̵� �Ұ�
+        // 최소 규칙: 막힌 블록은 이동 불가
         if (state == MAP_STATE.STAGE_BLOCK) return false;
         if (state == MAP_STATE.BASIC) return false;
 
-        // EMPTY/EXIT/STAIR ���� �̵� ����
+        // EMPTY/EXIT/STAIR 등은 이동 가능
 
-        // ���� ĭ �Ʒ��� �ٴ��� ������ �̵� �Ұ�
+        // 다음 칸 아래에 바닥이 없으면 이동 불가
         Vector2Int below = new Vector2Int(cell.x, cell.y + 1);
         if (!IsThereFloor(below)) return false;
 
@@ -100,7 +100,7 @@ public class GridStateManager : MonoBehaviour
 
         if (placedState != MAP_STATE.BASIC && placedState != MAP_STATE.STAIR) return false;
 
-        // ���� ������ ������ �ѱ�
+        // 이전 정보는 밖으로 넘김
         if (_placedObjByCell.TryGetValue(cell, out var prev) && prev != null)
         {
             prevObj = prev;

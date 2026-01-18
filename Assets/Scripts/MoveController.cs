@@ -13,15 +13,15 @@ public class MoveController : MonoBehaviour
     Vector2Int cellPos = Vector2Int.zero;
     bool _isMoving = false;
     bool _isJumping = false;
-    bool _waitingReachExit = false; // �ⱸ �������� ���
+    bool _waitingReachExit = false; // 출구 도착까지 대기
 
-    public Vector3 curPos { get; private set; } // ���� ��ġ 3 * 3 �ʿ� �ʿ�
+    public Vector3 curPos { get; private set; } // 현재 위치 3 * 3 맵에 필요
     DIRECTION _dir = DIRECTION.LEFT;
 
-    private LevelManager _level;        // LevelManager ����
+    private LevelManager _level;        // LevelManager 참조
     private Check8DirectionComponent _check8Dir;
 
-    // LevelManager�� ���� ���� �˷��� �� ȣ��
+    // LevelManager가 스폰 셀을 알려줄 때 호출
     public void SetStartCell(Vector2Int startCell, LevelManager level)
     {
         _level = level;
@@ -44,8 +44,8 @@ public class MoveController : MonoBehaviour
 
     void Start()
     {
-        // �ּ� ����: LevelManager�� SetStartCell�� ����� ��������,
-        // Ȥ�� ȣ�� Ÿ�̹��� ���� ���� ����� ������ ��Ƶ�
+        // 최소 수정: LevelManager가 SetStartCell로 덮어쓰는 구조지만,
+        // 혹시 호출 타이밍이 꼬일 때를 대비해 참조만 잡아둠
         if (_level == null)
         {
             _level = FindAnyObjectByType<LevelManager>();
@@ -94,12 +94,12 @@ public class MoveController : MonoBehaviour
         }
     }
 
-    // LevelManager�� WorldStart/TileSize �������� ������� ��ȯ (�ϵ� ������ ����)
+    // LevelManager의 WorldStart/TileSize 기준으로 셀→월드 변환 (하드 오프셋 제거)
     private Vector2 CellToWorld(Vector2Int cell)
     {
         if (_level == null)
         {
-            Debug.LogError("LevelManager�� �����ϴ�!");
+            Debug.LogError("LevelManager가 없습니다!");
         }
 
         return new Vector2(
@@ -116,7 +116,7 @@ public class MoveController : MonoBehaviour
         Vector3 destPos = CellToWorld(cellPos);
         Vector3 moveDir = destPos - transform.position;
 
-        // ���� GridStateManager ���� ����: LevelManager ��Ģ ���
+        // 기존 GridStateManager 의존 제거: LevelManager 규칙 사용
         curPos = destPos;
 
         float dist = moveDir.magnitude;
@@ -126,7 +126,7 @@ public class MoveController : MonoBehaviour
             _isMoving = false;
             _isJumping = false;
 
-            // �ⱸ ���� ���� Ŭ���� ó��
+            // 출구 도착 이후 클리어 처리
             if (_waitingReachExit)
             {
                 _waitingReachExit = false;
@@ -158,7 +158,7 @@ public class MoveController : MonoBehaviour
                 return;
         }
 
-        // �̵� ���� ���δ� GridStateManager���� ����
+        // 이동 가능 여부는 GridStateManager에게 질의
         if (GridStateManager.i == null) return;
 
         if (!GridStateManager.i.IsWalkable(next)) return;
@@ -185,7 +185,7 @@ public class MoveController : MonoBehaviour
                 return false;
         }
 
-        // �̵� ���� ���δ� GridStateManager���� ����
+        // 이동 가능 여부는 GridStateManager에게 질의
         if (GridStateManager.i == null) return false;
 
         if (!GridStateManager.i.TryGetState(stairCell, out var stairState)) return false;
@@ -193,7 +193,7 @@ public class MoveController : MonoBehaviour
 
         if (!GridStateManager.i.IsWalkable(jumpCell)) return false;
 
-        // ��� ó��
+        // 계단 처리
         if (!GridStateManager.i.TryGetStairDir(stairCell, out var sdir)) return false;
         if (_dir == DIRECTION.LEFT && sdir != STAIR_DIR.LEFT) return false;
         if (_dir == DIRECTION.RIGHT && sdir != STAIR_DIR.RIGHT) return false;
@@ -208,7 +208,7 @@ public class MoveController : MonoBehaviour
         if (GridStateManager.i == null) return false;
         if (!GridStateManager.i.TryGetState(cell, out var s)) return false;
 
-        // ���� Ÿ�ϸ� ����
+        // 막힌 타일만 제외
         return s != MAP_STATE.STAGE_BLOCK && s != MAP_STATE.BASIC;
     }
 
@@ -217,15 +217,15 @@ public class MoveController : MonoBehaviour
         if (_dir == DIRECTION.NONE) return false;
         if (GridStateManager.i == null) return false;
 
-        // �߹��� STAIR�ΰ�
+        // 발밑이 STAIR인가
         Vector2Int under = cellPos + new Vector2Int(0, 1);
         if (!GridStateManager.i.TryGetState(under, out var underState)) return false;
         if (underState != MAP_STATE.STAIR) return false;
 
-        // ������ ������: �밢�� �Ʒ� (y+1)
+        // 내려갈 목적지: 대각선 아래 (y+1)
         Vector2Int downCell = cellPos + (_dir == DIRECTION.LEFT ? new Vector2Int(-1, 1) : new Vector2Int(1, 1));
 
-        // ��� ������ ���� ���� "�ٴ� ����"�� ��ȭ�ؼ� ����� üũ
+        // 계단 내려갈 때는 경사라서 "바닥 조건"을 완화해서 통과만 체크
         if (!IsPassableIgnoreFloor(downCell)) return false;
 
         if (!GridStateManager.i.TryGetStairDir(under, out var sdir)) return false;
@@ -233,7 +233,7 @@ public class MoveController : MonoBehaviour
         if (sdir == STAIR_DIR.RIGHT && _dir != DIRECTION.LEFT) return false;
         if (sdir == STAIR_DIR.LEFT && _dir != DIRECTION.RIGHT) return false;
 
-        // �̵� ó��
+        // 이동 처리
         MoveTo(downCell);
         return true;
     }
