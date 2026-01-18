@@ -29,7 +29,7 @@ public class PlacementController : MonoBehaviour
         if (mouseIndicator != null)
         {
             indicatorSR = mouseIndicator.GetComponentInChildren<SpriteRenderer>(true);
-            mouseIndicator.SetActive(true);  // Ç×»ó ÄÑµÎ°í »öÀ¸·Î¸¸ »óÅÂ Ç¥½Ã
+            mouseIndicator.SetActive(true);  // ï¿½×»ï¿½ ï¿½ÑµÎ°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Î¸ï¿½ ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
         }
 
         blockCarried = player.GetChild(1).gameObject.GetComponent<SpriteRenderer>();
@@ -81,7 +81,7 @@ public class PlacementController : MonoBehaviour
         Vector3 ws = _level.WorldStart;
 
         int x = Mathf.RoundToInt((world.x - ws.x) / ts);
-        int y = Mathf.RoundToInt((ws.y - world.y) / ts); // y ¹ÝÀü Æ÷ÇÔ (¾Æ·¡·Î °¥¼ö·Ï +)
+        int y = Mathf.RoundToInt((ws.y - world.y) / ts); // y ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½Æ·ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ +)
         return new Vector2Int(x, y);
     }
 
@@ -92,10 +92,10 @@ public class PlacementController : MonoBehaviour
 
         if (GridStateManager.i == null) return;
 
-        // 1) ¸¶¿ì½º À§Ä¡(±×¸®µå ½º³ÀµÈ ¿ùµå ÁÂÇ¥)
+        // 1) ï¿½ï¿½ï¿½ì½º ï¿½ï¿½Ä¡(ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥)
         Vector3 worldPos = interactController.GetSelectedMapPosition();
 
-        // 2) ¼¿ ÁÂÇ¥ °è»ê
+        // 2) ï¿½ï¿½ ï¿½ï¿½Ç¥ ï¿½ï¿½ï¿½
 
         Vector2Int mouseCell = WorldToMapCell(worldPos);
         Vector2Int playerCell = WorldToMapCell(player.position);
@@ -111,8 +111,8 @@ public class PlacementController : MonoBehaviour
         int dx = mouseCell.x - playerCell.x;
         int dy = mouseCell.y - playerCell.y;
 
-        // 3) ÇÃ·¹ÀÌ¾î ÁÖº¯ 6Ä­¸¸ Çã¿ë
-        // (¡¾1, -1/0/1), ÀÚ±â ÀÚ¸®(0,0)´Â Á¦¿Ü
+        // 3) ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½Öºï¿½ 6Ä­ï¿½ï¿½ ï¿½ï¿½ï¿½
+        // (ï¿½ï¿½1, -1/0/1), ï¿½Ú±ï¿½ ï¿½Ú¸ï¿½(0,0)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         bool nearRule = (Mathf.Abs(dx) == 1 && Mathf.Abs(dy) <= 1);
 
         bool inside = GridStateManager.i.IsInside(mouseCell);
@@ -124,7 +124,7 @@ public class PlacementController : MonoBehaviour
         bool isPlacedBlock = hasState && GridStateManager.i.IsThereBlockYouPlaced(mouseCell);
         bool canRemove = nearRule && inside && isPlacedBlock;
 
-        // 4) »ö»óÀ¸·Î °¡´É/ºÒ°¡ Ç¥½Ã
+        // 4) ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½/ï¿½Ò°ï¿½ Ç¥ï¿½ï¿½
         if (indicatorSR != null)
         {
             if (canPlace) indicatorSR.color = Color.green;
@@ -138,32 +138,35 @@ public class PlacementController : MonoBehaviour
             ShowBlock(MAP_STATE.STAIR);
         }
 
-        // 5) ÁÂÅ¬¸¯ ½Ã ¼³Ä¡
+        // 5) ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Ä¡
         if (canPlace && Input.GetMouseButtonDown(0))
         {
             if (inventory != null && !inventory.TryConsume(placedState))
             {
-                // 0°³ÀÏ¶§ ¼û±è
+                // 0ï¿½ï¿½ï¿½Ï¶ï¿½ ï¿½ï¿½ï¿½ï¿½
                 SetCarriedVisible(false);
                 return;
             }
-            GameObject blockPlaced = GetSelectedPrefab();
 
-            Debug.Log("PLACE!");
-            
+            // Ç®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡
+            GameObject placed = InventoryPoolComponent.i.UseBlock(placedState, placePos, _level.transform);
+            //GameObject blockPlaced = GetSelectedPrefab();
 
-            // ÇÁ¸®ÆÕ °¡Á®¿À±â
-            GameObject placed = Instantiate(blockPlaced, placePos, Quaternion.identity);
-
-            var stairComp = placed.GetComponent<StairComponent>();
-            if (placedState == MAP_STATE.STAIR && stairComp != null)
+            // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            if (placedState == MAP_STATE.STAIR)
             {
-                stairComp.SetDir(stairDir);
+                var stairComp = placed.GetComponent<StairComponent>();
+                if (stairComp != null) stairComp.SetDir(stairDir);
             }
 
-            placed.transform.SetParent(_level.transform);
-
-            GridStateManager.i.RegisterPlacedBlock(mouseCell, placedState, placed);
+            // ï¿½×¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ + ï¿½ï¿½ï¿½î¾²ï¿½ï¿½
+            if (GridStateManager.i.RegisterPlacedBlock(mouseCell, placedState, placed, out var prevObj, out var prevState))
+            {
+                if (prevObj != null && (prevState == MAP_STATE.BASIC || prevState == MAP_STATE.STAIR))
+                {
+                    InventoryPoolComponent.i.RetreiveBlock(prevState, prevObj);
+                }
+            }
 
             Check8DirectionComponent check = player.GetComponent<Check8DirectionComponent>();
             if (check != null)
@@ -173,15 +176,17 @@ public class PlacementController : MonoBehaviour
             }
         }
 
-        if (canRemove && Input.GetMouseButtonDown(1)) // ¿ìÅ¬¸¯ ½Ã Á¦°Å (´Ü, ±âÁ¸ ½ºÅ×ÀÌÁö ºí·ÏÀº Á¦¿Ü)
+        if (canRemove && Input.GetMouseButtonDown(1)) // ï¿½ï¿½Å¬ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         {
-            if (GridStateManager.i.TryRemovePlacedBlock(mouseCell, out var removedObj))
+            if (GridStateManager.i.TryRemovePlacedBlock(mouseCell, out var removedObj, out var removedState))
             {
-                Debug.Log("REMOVED!");
-                if (removedObj != null && inventory.TryRetrieve(state))
+                //Debug.Log("REMOVED!");
+                if (removedObj != null)
                 {
-                    Destroy(removedObj);                    
+                    InventoryPoolComponent.i.RetreiveBlock(state, removedObj);                    
                 }
+
+                inventory?.TryRetrieve(removedState);
 
                 var check = player.GetComponent<Check8DirectionComponent>();
 
