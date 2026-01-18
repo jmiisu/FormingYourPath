@@ -13,15 +13,15 @@ public class MoveController : MonoBehaviour
     Vector2Int cellPos = Vector2Int.zero;
     bool _isMoving = false;
     bool _isJumping = false;
-    bool _waitingReachExit = false; // Ãâ±¸ µµÂø±îÁö ´ë±â
+    bool _waitingReachExit = false; // ì¶œêµ¬ ë„ì°©ê¹Œì§€ ëŒ€ê¸°
 
-    public Vector3 curPos { get; private set; } // ÇöÀç À§Ä¡ 3 * 3 ¸Ê¿¡ ÇÊ¿ä
+    public Vector3 curPos { get; private set; } // í˜„ì¬ ìœ„ì¹˜ 3 * 3 ë§µì— í•„ìš”
     DIRECTION _dir = DIRECTION.LEFT;
 
-    private LevelManager _level;        // LevelManager ÂüÁ¶
+    private LevelManager _level;        // LevelManager ì°¸ì¡°
     private Check8DirectionComponent _check8Dir;
 
-    // LevelManager°¡ ½ºÆù ¼¿À» ¾Ë·ÁÁÙ ¶§ È£Ãâ
+    // LevelManagerê°€ ìŠ¤í° ì…€ì„ ì•Œë ¤ì¤„ ë•Œ í˜¸ì¶œ
     public void SetStartCell(Vector2Int startCell, LevelManager level)
     {
         _level = level;
@@ -44,8 +44,8 @@ public class MoveController : MonoBehaviour
 
     void Start()
     {
-        // ÃÖ¼Ò ¼öÁ¤: LevelManager°¡ SetStartCell·Î µ¤¾î¾²´Â ±¸Á¶Áö¸¸,
-        // È¤½Ã È£Ãâ Å¸ÀÌ¹ÖÀÌ ²¿ÀÏ ¶§¸¦ ´ëºñÇØ ÂüÁ¶¸¸ Àâ¾ÆµÒ
+        // ìµœì†Œ ìˆ˜ì •: LevelManagerê°€ SetStartCellë¡œ ë®ì–´ì“°ëŠ” êµ¬ì¡°ì§€ë§Œ,
+        // í˜¹ì‹œ í˜¸ì¶œ íƒ€ì´ë°ì´ ê¼¬ì¼ ë•Œë¥¼ ëŒ€ë¹„í•´ ì°¸ì¡°ë§Œ ì¡ì•„ë‘ 
         if (_level == null)
         {
             _level = FindAnyObjectByType<LevelManager>();
@@ -94,12 +94,12 @@ public class MoveController : MonoBehaviour
         }
     }
 
-    // LevelManagerÀÇ WorldStart/TileSize ±âÁØÀ¸·Î ¼¿¡æ¿ùµå º¯È¯ (ÇÏµå ¿ÀÇÁ¼Â Á¦°Å)
+    // LevelManagerì˜ WorldStart/TileSize ê¸°ì¤€ìœ¼ë¡œ ì…€â†’ì›”ë“œ ë³€í™˜ (í•˜ë“œ ì˜¤í”„ì…‹ ì œê±°)
     private Vector2 CellToWorld(Vector2Int cell)
     {
         if (_level == null)
         {
-            Debug.LogError("LevelManager°¡ ¾ø½À´Ï´Ù!");
+            Debug.LogError("LevelManagerê°€ ì—†ìŠµë‹ˆë‹¤!");
         }
 
         return new Vector2(
@@ -116,7 +116,7 @@ public class MoveController : MonoBehaviour
         Vector3 destPos = CellToWorld(cellPos);
         Vector3 moveDir = destPos - transform.position;
 
-        // ±âÁ¸ GridStateManager ÀÇÁ¸ Á¦°Å: LevelManager ±ÔÄ¢ »ç¿ë
+        // ê¸°ì¡´ GridStateManager ì˜ì¡´ ì œê±°: LevelManager ê·œì¹™ ì‚¬ìš©
         curPos = destPos;
 
         float dist = moveDir.magnitude;
@@ -126,7 +126,7 @@ public class MoveController : MonoBehaviour
             _isMoving = false;
             _isJumping = false;
 
-            // Ãâ±¸ µµÂø ÀÌÈÄ Å¬¸®¾î Ã³¸®
+            // ì¶œêµ¬ ë„ì°© ì´í›„ í´ë¦¬ì–´ ì²˜ë¦¬
             if (_waitingReachExit)
             {
                 _waitingReachExit = false;
@@ -158,7 +158,7 @@ public class MoveController : MonoBehaviour
                 return;
         }
 
-        // ÀÌµ¿ °¡´É ¿©ºÎ´Â GridStateManager¿¡°Ô ÁúÀÇ
+        // ì´ë™ ê°€ëŠ¥ ì—¬ë¶€ëŠ” GridStateManagerì—ê²Œ ì§ˆì˜
         if (GridStateManager.i == null) return;
 
         if (!GridStateManager.i.IsWalkable(next)) return;
@@ -185,7 +185,7 @@ public class MoveController : MonoBehaviour
                 return false;
         }
 
-        // ÀÌµ¿ °¡´É ¿©ºÎ´Â GridStateManager¿¡°Ô ÁúÀÇ
+        // ì´ë™ ê°€ëŠ¥ ì—¬ë¶€ëŠ” GridStateManagerì—ê²Œ ì§ˆì˜
         if (GridStateManager.i == null) return false;
 
         if (!GridStateManager.i.TryGetState(stairCell, out var stairState)) return false;
@@ -193,7 +193,7 @@ public class MoveController : MonoBehaviour
 
         if (!GridStateManager.i.IsWalkable(jumpCell)) return false;
 
-        // °è´Ü Ã³¸®
+        // ê³„ë‹¨ ì²˜ë¦¬
         if (!GridStateManager.i.TryGetStairDir(stairCell, out var sdir)) return false;
         if (_dir == DIRECTION.LEFT && sdir != STAIR_DIR.LEFT) return false;
         if (_dir == DIRECTION.RIGHT && sdir != STAIR_DIR.RIGHT) return false;
@@ -208,7 +208,7 @@ public class MoveController : MonoBehaviour
         if (GridStateManager.i == null) return false;
         if (!GridStateManager.i.TryGetState(cell, out var s)) return false;
 
-        // ¸·Èù Å¸ÀÏ¸¸ Á¦¿Ü
+        // ë§‰íŒ íƒ€ì¼ë§Œ ì œì™¸
         return s != MAP_STATE.STAGE_BLOCK && s != MAP_STATE.BASIC;
     }
 
@@ -217,15 +217,15 @@ public class MoveController : MonoBehaviour
         if (_dir == DIRECTION.NONE) return false;
         if (GridStateManager.i == null) return false;
 
-        // ¹ß¹ØÀÌ STAIRÀÎ°¡
+        // ë°œë°‘ì´ STAIRì¸ê°€
         Vector2Int under = cellPos + new Vector2Int(0, 1);
         if (!GridStateManager.i.TryGetState(under, out var underState)) return false;
         if (underState != MAP_STATE.STAIR) return false;
 
-        // ³»·Á°¥ ¸ñÀûÁö: ´ë°¢¼± ¾Æ·¡ (y+1)
+        // ë‚´ë ¤ê°ˆ ëª©ì ì§€: ëŒ€ê°ì„  ì•„ë˜ (y+1)
         Vector2Int downCell = cellPos + (_dir == DIRECTION.LEFT ? new Vector2Int(-1, 1) : new Vector2Int(1, 1));
 
-        // °è´Ü ³»·Á°¥ ¶§´Â °æ»ç¶ó¼­ "¹Ù´Ú Á¶°Ç"À» ¿ÏÈ­ÇØ¼­ Åë°ú¸¸ Ã¼Å©
+        // ê³„ë‹¨ ë‚´ë ¤ê°ˆ ë•ŒëŠ” ê²½ì‚¬ë¼ì„œ "ë°”ë‹¥ ì¡°ê±´"ì„ ì™„í™”í•´ì„œ í†µê³¼ë§Œ ì²´í¬
         if (!IsPassableIgnoreFloor(downCell)) return false;
 
         if (!GridStateManager.i.TryGetStairDir(under, out var sdir)) return false;
@@ -233,7 +233,7 @@ public class MoveController : MonoBehaviour
         if (sdir == STAIR_DIR.RIGHT && _dir != DIRECTION.LEFT) return false;
         if (sdir == STAIR_DIR.LEFT && _dir != DIRECTION.RIGHT) return false;
 
-        // ÀÌµ¿ Ã³¸®
+        // ì´ë™ ì²˜ë¦¬
         MoveTo(downCell);
         return true;
     }

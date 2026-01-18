@@ -8,7 +8,7 @@ public class GridStateManager : MonoBehaviour
     public static GridStateManager i;
 
     private Dictionary<Vector2Int, MAP_STATE> _map = new();
-    private Dictionary<Vector2Int, GameObject> _placedObjByCell = new(); // º≥ƒ°«— ∫Ì∑œ µ•¿Ã≈Õ
+    private Dictionary<Vector2Int, GameObject> _placedObjByCell = new(); // ÏÑ§ÏπòÌïú Î∏îÎ°ù Îç∞Ïù¥ÌÑ∞
     private int _width;
     private int _height;
 
@@ -31,7 +31,7 @@ public class GridStateManager : MonoBehaviour
         _height = height;
     }
 
-    // π¸¿ß æ»ø° µÈæÓ¿÷¥¬¡ˆ
+    // Î≤îÏúÑ ÏïàÏóê Îì§Ïñ¥ÏûàÎäîÏßÄ
     public bool IsInside(Vector2Int cell)
     {
         return (cell.x >= 0 && cell.x < _width && cell.y >= 0 && cell.y < _height);
@@ -39,7 +39,7 @@ public class GridStateManager : MonoBehaviour
 
     public bool IsThereFloor(Vector2Int cellBelow)
     {
-        if (!TryGetState(cellBelow, out var belowState)) return false; // ∏  π€
+        if (!TryGetState(cellBelow, out var belowState)) return false; // Îßµ Î∞ñ
 
         return belowState == MAP_STATE.STAGE_BLOCK 
             || belowState == MAP_STATE.BASIC 
@@ -62,18 +62,18 @@ public class GridStateManager : MonoBehaviour
         return state == MAP_STATE.BASIC || state == MAP_STATE.STAIR;
     }
 
-    // ¿Ãµø ∞°¥… ±‘ƒ¢
+    // Ïù¥Îèô Í∞ÄÎä• Í∑úÏπô
     public bool IsWalkable(Vector2Int cell)
     {
-        if (!TryGetState(cell, out var state)) return false; // ∏  π€
+        if (!TryGetState(cell, out var state)) return false; // Îßµ Î∞ñ
 
-        // √÷º“ ±‘ƒ¢: ∏∑»˘ ∫Ì∑œ¿∫ ¿Ãµø ∫“∞°
+        // ÏµúÏÜå Í∑úÏπô: ÎßâÌûå Î∏îÎ°ùÏùÄ Ïù¥Îèô Î∂àÍ∞Ä
         if (state == MAP_STATE.STAGE_BLOCK) return false;
         if (state == MAP_STATE.BASIC) return false;
 
-        // EMPTY/EXIT/STAIR µÓ¿∫ ¿Ãµø ∞°¥…
+        // EMPTY/EXIT/STAIR Îì±ÏùÄ Ïù¥Îèô Í∞ÄÎä•
 
-        // ¥Ÿ¿Ω ƒ≠ æ∆∑°ø° πŸ¥⁄¿Ã æ¯¿∏∏È ¿Ãµø ∫“∞°
+        // Îã§Ïùå Ïπ∏ ÏïÑÎûòÏóê Î∞îÎã•Ïù¥ ÏóÜÏúºÎ©¥ Ïù¥Îèô Î∂àÍ∞Ä
         Vector2Int below = new Vector2Int(cell.x, cell.y + 1);
         if (!IsThereFloor(below)) return false;
 
@@ -100,7 +100,7 @@ public class GridStateManager : MonoBehaviour
 
         if (placedState != MAP_STATE.BASIC && placedState != MAP_STATE.STAIR) return false;
 
-        // ¿Ã¿¸ ¡§∫∏¥¬ π€¿∏∑Œ ≥—±Ë
+        // Ïù¥Ï†Ñ Ï†ïÎ≥¥Îäî Î∞ñÏúºÎ°ú ÎÑòÍπÄ
         if (_placedObjByCell.TryGetValue(cell, out var prev) && prev != null)
         {
             prevObj = prev;

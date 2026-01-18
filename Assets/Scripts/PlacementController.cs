@@ -29,7 +29,7 @@ public class PlacementController : MonoBehaviour
         if (mouseIndicator != null)
         {
             indicatorSR = mouseIndicator.GetComponentInChildren<SpriteRenderer>(true);
-            mouseIndicator.SetActive(true);  // Ç×»ó ÄÑµÎ°í »öÀ¸·Î¸¸ »óÅÂ Ç¥½Ã
+            mouseIndicator.SetActive(true);  // í•­ìƒ ì¼œë‘ê³  ìƒ‰ìœ¼ë¡œë§Œ ìƒíƒœ í‘œì‹œ
         }
 
         blockCarried = player.GetChild(1).gameObject.GetComponent<SpriteRenderer>();
@@ -81,7 +81,7 @@ public class PlacementController : MonoBehaviour
         Vector3 ws = _level.WorldStart;
 
         int x = Mathf.RoundToInt((world.x - ws.x) / ts);
-        int y = Mathf.RoundToInt((ws.y - world.y) / ts); // y ¹İÀü Æ÷ÇÔ (¾Æ·¡·Î °¥¼ö·Ï +)
+        int y = Mathf.RoundToInt((ws.y - world.y) / ts); // y ë°˜ì „ í¬í•¨ (ì•„ë˜ë¡œ ê°ˆìˆ˜ë¡ +)
         return new Vector2Int(x, y);
     }
 
@@ -92,10 +92,10 @@ public class PlacementController : MonoBehaviour
 
         if (GridStateManager.i == null) return;
 
-        // 1) ¸¶¿ì½º À§Ä¡(±×¸®µå ½º³ÀµÈ ¿ùµå ÁÂÇ¥)
+        // 1) ë§ˆìš°ìŠ¤ ìœ„ì¹˜(ê·¸ë¦¬ë“œ ìŠ¤ëƒ…ëœ ì›”ë“œ ì¢Œí‘œ)
         Vector3 worldPos = interactController.GetSelectedMapPosition();
 
-        // 2) ¼¿ ÁÂÇ¥ °è»ê
+        // 2) ì…€ ì¢Œí‘œ ê³„ì‚°
 
         Vector2Int mouseCell = WorldToMapCell(worldPos);
         Vector2Int playerCell = WorldToMapCell(player.position);
@@ -111,8 +111,8 @@ public class PlacementController : MonoBehaviour
         int dx = mouseCell.x - playerCell.x;
         int dy = mouseCell.y - playerCell.y;
 
-        // 3) ÇÃ·¹ÀÌ¾î ÁÖº¯ 6Ä­¸¸ Çã¿ë
-        // (¡¾1, -1/0/1), ÀÚ±â ÀÚ¸®(0,0)´Â Á¦¿Ü
+        // 3) í”Œë ˆì´ì–´ ì£¼ë³€ 6ì¹¸ë§Œ í—ˆìš©
+        // (Â±1, -1/0/1), ìê¸° ìë¦¬(0,0)ëŠ” ì œì™¸
         bool nearRule = (Mathf.Abs(dx) == 1 && Mathf.Abs(dy) <= 1);
 
         bool inside = GridStateManager.i.IsInside(mouseCell);
@@ -124,7 +124,7 @@ public class PlacementController : MonoBehaviour
         bool isPlacedBlock = hasState && GridStateManager.i.IsThereBlockYouPlaced(mouseCell);
         bool canRemove = nearRule && inside && isPlacedBlock;
 
-        // 4) »ö»óÀ¸·Î °¡´É/ºÒ°¡ Ç¥½Ã
+        // 4) ìƒ‰ìƒìœ¼ë¡œ ê°€ëŠ¥/ë¶ˆê°€ í‘œì‹œ
         if (indicatorSR != null)
         {
             if (canPlace) indicatorSR.color = Color.green;
@@ -138,28 +138,28 @@ public class PlacementController : MonoBehaviour
             ShowBlock(MAP_STATE.STAIR);
         }
 
-        // 5) ÁÂÅ¬¸¯ ½Ã ¼³Ä¡
+        // 5) ì¢Œí´ë¦­ ì‹œ ì„¤ì¹˜
         if (canPlace && Input.GetMouseButtonDown(0))
         {
             if (inventory != null && !inventory.TryConsume(placedState))
             {
-                // 0°³ÀÏ¶§ ¼û±è
+                // 0ê°œì¼ë•Œ ìˆ¨ê¹€
                 SetCarriedVisible(false);
                 return;
             }
 
-            // Ç®¿¡¼­ ²¨³»¼­ ¹èÄ¡
+            // í’€ì—ì„œ êº¼ë‚´ì„œ ë°°ì¹˜
             GameObject placed = InventoryPoolComponent.i.UseBlock(placedState, placePos, _level.transform);
             //GameObject blockPlaced = GetSelectedPrefab();
 
-            // °è´Ü ¹æÇâ Àû¿ë
+            // ê³„ë‹¨ ë°©í–¥ ì ìš©
             if (placedState == MAP_STATE.STAIR)
             {
                 var stairComp = placed.GetComponent<StairComponent>();
                 if (stairComp != null) stairComp.SetDir(stairDir);
             }
 
-            // ±×¸®µå µî·Ï + µ¤¾î¾²±â
+            // ê·¸ë¦¬ë“œ ë“±ë¡ + ë®ì–´ì“°ê¸°
             if (GridStateManager.i.RegisterPlacedBlock(mouseCell, placedState, placed, out var prevObj, out var prevState))
             {
                 if (prevObj != null && (prevState == MAP_STATE.BASIC || prevState == MAP_STATE.STAIR))
@@ -176,7 +176,7 @@ public class PlacementController : MonoBehaviour
             }
         }
 
-        if (canRemove && Input.GetMouseButtonDown(1)) // ¿ìÅ¬¸¯ ½Ã Á¦°Å (´Ü, ±âÁ¸ ½ºÅ×ÀÌÁö ºí·ÏÀº Á¦¿Ü)
+        if (canRemove && Input.GetMouseButtonDown(1)) // ìš°í´ë¦­ ì‹œ ì œê±° (ë‹¨, ê¸°ì¡´ ìŠ¤í…Œì´ì§€ ë¸”ë¡ì€ ì œì™¸)
         {
             if (GridStateManager.i.TryRemovePlacedBlock(mouseCell, out var removedObj, out var removedState))
             {
