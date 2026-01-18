@@ -9,6 +9,11 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private GameObject level;
     [SerializeField] private MoveController playerMove;
 
+    // StageManager가 구독해서 다음 스테이지로 이동 처리
+    public event Action OnStageCleared;
+
+    // 현재 로드할 스테이지 번호
+    private int _stageIndex = 0;
 
     // MoveController가 참조할 맵 배치 기준점(정중앙 정렬 결과)
     public Vector3 WorldStart { get; private set; }
@@ -29,6 +34,11 @@ public class LevelManager : MonoBehaviour
     {
         CreateLevel();
         ApplyPlayerSpawn();
+    }
+
+    public void SetStageIndex(int stageIdx)
+    {
+        _stageIndex = stageIdx;
     }
 
     private void CreateLevel()
@@ -146,16 +156,18 @@ public class LevelManager : MonoBehaviour
         Debug.Log("스테이지 클리어!");
 
         playerMove.enabled = false;
+
+        // 클리어 알림
+        OnStageCleared?.Invoke();
     }
 
     private string[] ReadLevelText()
     {
-        TextAsset bindData = Resources.Load("LevelText\\Tutorial_3") as TextAsset;
+        string levelName = $"LevelText\\Tutorial_{_stageIndex}";
+        TextAsset bindData = Resources.Load(levelName) as TextAsset;
 
         string data = bindData.text.Replace(Environment.NewLine, string.Empty);
 
         return data.Split('-');
     }
-
-
 }

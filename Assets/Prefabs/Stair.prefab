@@ -96,7 +96,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 108582545145362671}
-  - component: {fileID: 6605555792790774295}
+  - component: {fileID: 9135806895630551887}
   m_Layer: 0
   m_Name: Stair
   m_TagString: Untagged
@@ -120,7 +120,7 @@ Transform:
   - {fileID: 6887040118226046601}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6605555792790774295
+--- !u!114 &9135806895630551887
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
