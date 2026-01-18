@@ -18,6 +18,7 @@ public class PlacementController : MonoBehaviour
 
     [Header("Placement")]
     [SerializeField] private MAP_STATE placedState = MAP_STATE.BASIC;
+    [SerializeField] private STAIR_DIR stairDir = STAIR_DIR.RIGHT;
 
     private SpriteRenderer indicatorSR;
     private SpriteRenderer blockCarried;
@@ -65,6 +66,7 @@ public class PlacementController : MonoBehaviour
         else if (state == MAP_STATE.STAIR)
         {
             blockCarried.sprite = stairBlockPrefab.GetComponentInChildren<SpriteRenderer>().sprite;
+            blockCarried.flipX = (stairDir == STAIR_DIR.LEFT);
         }
     }
 
@@ -130,6 +132,12 @@ public class PlacementController : MonoBehaviour
             else indicatorSR.color = Color.red;
         }
 
+        if (placedState == MAP_STATE.STAIR && Input.GetKeyDown(KeyCode.R))
+        {
+            stairDir = (stairDir == STAIR_DIR.RIGHT) ? STAIR_DIR.LEFT : STAIR_DIR.RIGHT;
+            ShowBlock(MAP_STATE.STAIR);
+        }
+
         // 5) 좌클릭 시 설치
         if (canPlace && Input.GetMouseButtonDown(0))
         {
@@ -144,13 +152,6 @@ public class PlacementController : MonoBehaviour
             GameObject placed = InventoryPoolComponent.i.UseBlock(placedState, placePos, _level.transform);
             //GameObject blockPlaced = GetSelectedPrefab();
 
-<<<<<<< Updated upstream
-            // 프리팹 가져오기
-            GameObject placed = Instantiate(blockPlaced, placePos, Quaternion.identity);
-            placed.transform.SetParent(_level.transform);
-
-            GridStateManager.i.RegisterPlacedBlock(mouseCell, placedState, placed);
-=======
             // 계단 방향 적용
             if (placedState == MAP_STATE.STAIR)
             {
@@ -166,7 +167,6 @@ public class PlacementController : MonoBehaviour
                     InventoryPoolComponent.i.RetreiveBlock(prevState, prevObj);
                 }
             }
->>>>>>> Stashed changes
 
             Check8DirectionComponent check = player.GetComponent<Check8DirectionComponent>();
             if (check != null)
