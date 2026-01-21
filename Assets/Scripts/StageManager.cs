@@ -1,30 +1,47 @@
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using static System.Net.Mime.MediaTypeNames;
 
 public class StageManager : MonoBehaviour
 {
     [Header("Stage Settings")] // 스테이지 관련
     [SerializeField] private int totalStageCount = 20;
     [SerializeField] private int currentStageIndex = 0;
+
+    [SerializeField] private StageClearComponent stageClearUI;
+
+    private const string KEY_SELECTED_STAGE = "SelectedStage";
+    private const string KEY_UNLOCKED_STAGE = "UnlockedStage";
+
     private int _unlockedMaxStage = 5;
 
     private LevelManager _level;
 
     private void Awake()
     {
-        _level = FindAnyObjectByType<LevelManager>();  
+        _level = FindAnyObjectByType<LevelManager>();
     }
 
     void Start()
     {
-        LoadStage(currentStageIndex);
         // 저장된 해금 정보 불러오기
-        _unlockedMaxStage = PlayerPrefs.GetInt("UnlockedStage", 0);
-    
+        _unlockedMaxStage = PlayerPrefs.GetInt(KEY_UNLOCKED_STAGE, 0);
+        currentStageIndex = PlayerPrefs.GetInt(KEY_SELECTED_STAGE, 0);
+
         // LevelManager 클리어 이벤트 구독
         if (_level != null)
         {
             _level.OnStageCleared += HandleStageCleared;
         }
+
+        if (stageClearUI != null)
+        {
+            stageClearUI.Bind(this);
+        }
+
+        LoadStage(currentStageIndex);
     }
 
     // 스테이지 클리어 시 호출됨
@@ -39,8 +56,15 @@ public class StageManager : MonoBehaviour
             PlayerPrefs.SetInt("UnlockedStage", _unlockedMaxStage);
         }
 
-        // 자동으로 다음 스테이지로 이동
-        LoadNextStage();
+        // 클리어 팝업 띄우기
+        if (stageClearUI != null)
+        {
+            stageClearUI.Show();
+        }
+        else
+        {
+            LoadNextStage();
+        }
     }
 
     // 다음 스테이지 로드
@@ -55,6 +79,7 @@ public class StageManager : MonoBehaviour
             return;
         }
 
+        PlayerPrefs.SetInt(KEY_SELECTED_STAGE, nextIndex);
         LoadStage(nextIndex);
     }
 
@@ -72,7 +97,12 @@ public class StageManager : MonoBehaviour
 
         if (_level != null)
         {
-            _level.SetStageIndex(currentStageIndex);
+            _level.LoadStage(currentStageIndex);
         }
+    }
+
+    public void GoToMenu()
+    {
+        SceneManager.LoadScene("MainMenu");
     }
 }

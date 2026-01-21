@@ -6,7 +6,7 @@ using UnityEngine;
 public class LevelManager : MonoBehaviour
 {
     [SerializeField] private GameObject[] mapTile;
-    [SerializeField] private GameObject level;
+    //[SerializeField] private GameObject level;
     [SerializeField] private MoveController playerMove;
 
     // StageManager가 구독해서 다음 스테이지로 이동 처리
@@ -32,8 +32,8 @@ public class LevelManager : MonoBehaviour
 
     void Start()
     {
-        CreateLevel();
-        ApplyPlayerSpawn();
+        //CreateLevel();
+        //ApplyPlayerSpawn();
     }
 
     public void SetStageIndex(int stageIdx)
@@ -118,7 +118,7 @@ public class LevelManager : MonoBehaviour
         // 기존 로직 유지: EMPTY는 생성 안 함
         if (state == MAP_STATE.EMPTY) return;
 
-        GameObject newTile = Instantiate(mapTile[tileIndex], level.transform, default);
+        GameObject newTile = Instantiate(mapTile[tileIndex], transform, default);
 
         // 기존 중앙정렬 좌표계 유지
         newTile.transform.position = new Vector3(
@@ -163,11 +163,41 @@ public class LevelManager : MonoBehaviour
 
     private string[] ReadLevelText()
     {
-        string levelName = $"LevelText\\Tutorial_{_stageIndex}";
+        string levelName = $"LevelText/Tutorial_{_stageIndex}";
         TextAsset bindData = Resources.Load(levelName) as TextAsset;
+
+        if (bindData == null)
+        {
+            Debug.LogError($"레벨 텍스트를 찾을 수 없습니다: {levelName}");
+            return Array.Empty<string>();
+        }
 
         string data = bindData.text.Replace(Environment.NewLine, string.Empty);
 
         return data.Split('-');
+    }
+
+    public void LoadStage(int stageIdx)
+    {
+        _stageIndex = stageIdx;
+
+        ClearLevelObjects();
+
+        CreateLevel();
+        ApplyPlayerSpawn();
+
+        if (playerMove != null) playerMove.enabled = true;
+    }
+
+    private void ClearLevelObjects()
+    {
+        if (transform == null) return;
+
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            Destroy(transform.GetChild(i).gameObject);
+        }
+
+        HasSpawnCell = false;
     }
 }
