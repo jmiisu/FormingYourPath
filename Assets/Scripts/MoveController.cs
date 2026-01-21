@@ -123,6 +123,7 @@ public class MoveController : MonoBehaviour
         if (dist < speed * Time.deltaTime)
         {
             transform.position = destPos;
+            ItemManager.i?.TryPickup(cellPos);
             _isMoving = false;
             _isJumping = false;
 

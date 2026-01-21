@@ -6,7 +6,6 @@ using UnityEngine;
 public class LevelManager : MonoBehaviour
 {
     [SerializeField] private GameObject[] mapTile;
-    //[SerializeField] private GameObject level;
     [SerializeField] private MoveController playerMove;
 
     // StageManager가 구독해서 다음 스테이지로 이동 처리
@@ -27,51 +26,40 @@ public class LevelManager : MonoBehaviour
 
     public float TileSize
     {
-        get { return mapTile[0].transform.GetChild(0).GetComponent<SpriteRenderer>().sprite.bounds.size.x; }
+        get 
+        { 
+            return mapTile[0].transform.GetChild(0)
+                .GetComponent<SpriteRenderer>()
+                .sprite.bounds.size.x; 
+        }
     }
 
-    void Start()
-    {
-        //CreateLevel();
-        //ApplyPlayerSpawn();
-    }
-
-    public void SetStageIndex(int stageIdx)
+    public void LoadStage(int stageIdx)
     {
         _stageIndex = stageIdx;
+
+        ClearLevelObjects();
+        BuildLevelFromText(_stageIndex);
+        ApplyPlayerSpawn();
+
+        if (playerMove != null) playerMove.enabled = true;
+
+        ItemManager.i?.LoadStageItems(_stageIndex, WorldStart, TileSize, transform);
     }
 
-    private void CreateLevel()
+    private void BuildLevelFromText(int stageIdx)
     {
-        string[] mapData = ReadLevelText();
+        string[] mapData = ReadLevelText(stageIdx);
 
+        // 크기 계산
         _mapWidth = mapData[0].ToCharArray().Length;
         _mapHeight = mapData.Length;
 
-        Camera cam = Camera.main;
+        // 정중앙으로 정렬
+        WorldStart = CalcWorldStart(_mapWidth, _mapHeight);
 
-        float planeZ = 0f;
-        float depth = planeZ - cam.transform.position.z;
-
-        Vector3 worldCenter = cam.ScreenToWorldPoint(
-            new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, depth)
-        );
-
-        float mapWidthWorld = _mapWidth * TileSize;
-        float mapHeightWorld = _mapHeight * TileSize;
-
-        // 맵이 화면 정중앙에 오도록 하는 시작점(좌상단 기준점)
-        // y좌표에 -0.5f를 함으로써 그리드 내부로 맞춤
-        Vector3 worldStart = new Vector3(
-            worldCenter.x - mapWidthWorld * 0.5f + TileSize * 0.5f,
-            worldCenter.y + mapHeightWorld * 0.5f - TileSize * 0.5f - 0.5f,
-            planeZ
-        );
-
-
-        WorldStart = worldStart;
-
-        var initialMap = new Dictionary<Vector2Int, MAP_STATE>(_mapWidth * _mapHeight);
+        // 초기 맵 상태 채우기
+        Dictionary<Vector2Int, MAP_STATE> initialMap = new(_mapWidth * _mapHeight);
         HasSpawnCell = false;
 
         for (int y = 0; y < _mapHeight; y++)
@@ -94,6 +82,29 @@ public class LevelManager : MonoBehaviour
         }
 
     }
+    
+    private Vector3 CalcWorldStart(int mapWidth, int mapHeight)
+    {
+        Camera cam = Camera.main;
+
+        float planeZ = 0f;
+        float depth = planeZ - cam.transform.position.z;
+
+        Vector3 worldCenter = cam.ScreenToWorldPoint(
+            new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, depth)
+        );
+
+        float mapWidthWorld = mapWidth * TileSize;
+        float mapHeightWorld = mapHeight * TileSize;
+
+        // 맵이 화면 정중앙에 오도록 하는 시작점(좌상단 기준점)
+        // y좌표에 -0.5f를 함으로써 그리드 내부로 맞춤
+        return new Vector3(
+            worldCenter.x - mapWidthWorld * 0.5f + TileSize * 0.5f,
+            worldCenter.y + mapHeightWorld * 0.5f - TileSize * 0.5f - 0.5f,
+            planeZ
+        );
+    }
 
     private void PlaceTile(string tileType, int x, int y, Dictionary<Vector2Int, MAP_STATE> initialMap)
     {
@@ -115,9 +126,13 @@ public class LevelManager : MonoBehaviour
         // 맵 상태 기록
         initialMap[cell] = state;
 
-        // 기존 로직 유지: EMPTY는 생성 안 함
+        // EMPTY는 생성 안 함
         if (state == MAP_STATE.EMPTY) return;
 
+        SpawnTile(tileIndex, x, y);
+    }
+    private void SpawnTile(int tileIndex, int x, int y)
+    {
         GameObject newTile = Instantiate(mapTile[tileIndex], transform, default);
 
         // 기존 중앙정렬 좌표계 유지
@@ -126,7 +141,7 @@ public class LevelManager : MonoBehaviour
             WorldStart.y - (TileSize * y),
             0
         );
-    }
+    }    
 
     private void ApplyPlayerSpawn()
     {
@@ -161,33 +176,19 @@ public class LevelManager : MonoBehaviour
         OnStageCleared?.Invoke();
     }
 
-    private string[] ReadLevelText()
+    private string[] ReadLevelText(int stageIdx)
     {
-        string levelName = $"LevelText/Tutorial_{_stageIndex}";
-        TextAsset bindData = Resources.Load(levelName) as TextAsset;
+        string levelName = $"LevelText/Tutorial_{stageIdx}";
+        string[] lines = ReadTextFile.ReadText(levelName);
 
-        if (bindData == null)
+        if (lines.Length == 0)
         {
             Debug.LogError($"레벨 텍스트를 찾을 수 없습니다: {levelName}");
-            return Array.Empty<string>();
         }
 
-        string data = bindData.text.Replace(Environment.NewLine, string.Empty);
-
-        return data.Split('-');
+        return lines;
     }
 
-    public void LoadStage(int stageIdx)
-    {
-        _stageIndex = stageIdx;
-
-        ClearLevelObjects();
-
-        CreateLevel();
-        ApplyPlayerSpawn();
-
-        if (playerMove != null) playerMove.enabled = true;
-    }
 
     private void ClearLevelObjects()
     {
