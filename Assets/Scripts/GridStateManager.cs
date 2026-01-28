@@ -80,14 +80,14 @@ public class GridStateManager : MonoBehaviour
         return true;
     }
 
-    public bool SetState(Vector2Int cell, MAP_STATE newState)
-    {
-        if (!IsInside(cell)) return false;
+    //public bool SetState(Vector2Int cell, MAP_STATE newState)
+    //{
+    //    if (!IsInside(cell)) return false;
 
-        _map[cell] = newState;
-        OnCellChanged?.Invoke(cell, newState);
-        return true;
-    }
+    //    _map[cell] = newState;
+    //    OnCellChanged?.Invoke(cell, newState);
+    //    return true;
+    //}
 
     public bool RegisterPlacedBlock(Vector2Int cell, MAP_STATE placedState, GameObject placedObj, out GameObject prevObj, out MAP_STATE prevState)
     {

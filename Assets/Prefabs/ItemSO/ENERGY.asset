@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 158df8c085587254782d07847d901b01, type: 3}
+  m_Name: ENERGY
+  m_EditorClassIdentifier: 
+  type: 3
+  icon: {fileID: -2457547339225144516, guid: 96182999874425c40b24f793c88180a4, type: 3}
+  worldPrefab: {fileID: 761626847743052250, guid: ee4dd0bcb6bea02479016f7e8c86af71, type: 3}
+  placeable: 0
+  placeMapState: 5

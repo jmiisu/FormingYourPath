@@ -1,24 +1,49 @@
+using System.Collections.Generic;
 using UnityEngine;
+using static UnityEditor.Progress;
 
 public class InventoryPoolComponent : MonoBehaviour
 {
     public static InventoryPoolComponent i;
 
-    [SerializeField] GameObject basic;
-    [SerializeField] GameObject stair;
+    [SerializeField] private ItemRegistrySO itemRegistry;
 
-    private Transform BasicPool => transform.GetChild(0);
-    private Transform StairPool => transform.GetChild(1);
+    private Transform poolRoot;
+    //[SerializeField] GameObject basic;
+    //[SerializeField] GameObject stair;
+    //[SerializeField] GameObject energy;
+    //[SerializeField] GameObject pickaxe;
+
+    private readonly Dictionary<ITEM_TYPE, Transform> _poolParents = new();
+
+    //private Transform BasicPool => transform.GetChild(0);
+    //private Transform StairPool => transform.GetChild(1);
+    //private Transform EtcPool => transform.GetChild(2);
 
     private void Awake()
     {
         i = this;
+        poolRoot = transform;
     }
 
-    public void InitPool(MAP_STATE state, int val = 1)
+    private Transform GetPool(ITEM_TYPE item)
     {
-        Transform parent = GetPool(state);
-        GameObject prefab = GetPrefab(state);
+        if (_poolParents.TryGetValue(item, out Transform t) && t != null) return t;
+
+        GameObject pool = new GameObject($"{item}");
+        pool.transform.SetParent(transform, false);
+
+        t = pool.transform;
+        _poolParents[item] = t;
+        return t;
+    }
+
+    public void InitPool(ITEM_TYPE type, int val = 1)
+    {
+        if (itemRegistry == null) return;
+
+        GameObject prefab = itemRegistry.GetWorldPrefab(type);
+        Transform parent = GetPool(type);
 
         for (int i = 0; i < val; i++)
         {
@@ -27,9 +52,9 @@ public class InventoryPoolComponent : MonoBehaviour
         }
     }
 
-    public GameObject UseBlock(MAP_STATE state, Vector3 worldPos, Transform level)
+    public GameObject UseItem(ITEM_TYPE type, Vector3 worldPos, Transform level)
     {
-        Transform pool = GetPool(state);
+        Transform pool = GetPool(type);
 
         if (pool.childCount == 0)
         {
@@ -37,28 +62,45 @@ public class InventoryPoolComponent : MonoBehaviour
             return null;
         }
 
-        GameObject block = pool.GetChild(0).gameObject;
+        GameObject obj = pool.GetChild(0).gameObject;
 
-        block.transform.SetParent(level, true);
-        block.transform.position = worldPos;
-        block.SetActive(true);
+        obj.transform.SetParent(level, true);
+        obj.transform.position = worldPos;
+        obj.SetActive(true);
 
-        return block;
+        return obj;
     }
 
-    public void RetreiveBlock(MAP_STATE state, GameObject block)
+    public void RetreiveItem(ITEM_TYPE type, GameObject obj)
     {
-        if (block == null) return;
+        if (obj == null) return;
 
-        Transform pool = GetPool(state);
+        Transform pool = GetPool(type);
 
-        block.SetActive(false);
-        block.transform.SetParent(pool, false);
+        obj.SetActive(false);
+        obj.transform.SetParent(pool, false);
     }
 
-    private Transform GetPool(MAP_STATE state)
-        => (state == MAP_STATE.STAIR) ? StairPool : BasicPool;
+    //private Transform GetPool(ITEM_TYPE type)
+    //{
+    //    return type switch
+    //    {
+    //        ITEM_TYPE.BASIC => BasicPool,
+    //        ITEM_TYPE.STAIR => StairPool,
+    //        _ => EtcPool,
+    //    };
+    //}
+        //=> (type == ITEM_TYPE.STAIR) ? StairPool : BasicPool;
 
-    private GameObject GetPrefab(MAP_STATE state)
-        => (state == MAP_STATE.STAIR) ? stair : basic;
+    //private GameObject GetPrefab(ITEM_TYPE type)
+    //{
+    //    return type switch
+    //    {
+    //        ITEM_TYPE.BASIC => basic,
+    //        ITEM_TYPE.STAIR => stair,
+    //        ITEM_TYPE.ENERGY => energy,
+    //        _ => pickaxe,
+    //    };
+    //}
+        //=> (type == ITEM_TYPE.STAIR) ? stair : basic;
 }

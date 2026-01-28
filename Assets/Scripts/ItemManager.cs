@@ -13,6 +13,7 @@ public class ItemManager : MonoBehaviour
     [SerializeField] private GameObject basicItem;
     [SerializeField] private GameObject stairItem;
     [SerializeField] private GameObject energyItem;
+    [SerializeField] private GameObject pickaxeItem;
 
     // 현재 스테이지 아이템 데이터
     private Dictionary<Vector2Int, ITEM_STATE> _itemByCell = new();
@@ -73,6 +74,7 @@ public class ItemManager : MonoBehaviour
 
         OnItemPicked?.Invoke(item);
         Debug.Log($"[ItemManager] Picked {item} at {playerCell}");
+        //InventoryPoolComponent.i.RetreiveItem(ItemDatabase.ToItemType(item), obj);
         return true;
     }
     
@@ -80,6 +82,8 @@ public class ItemManager : MonoBehaviour
     {
         int itemIndex = int.Parse(itemType);
         ITEM_STATE item = (ITEM_STATE)itemIndex;
+
+        if (item == ITEM_STATE.NONE) return;
 
         Vector2Int cell = new Vector2Int(x, y);
         _itemByCell[cell] = item;
@@ -111,6 +115,7 @@ public class ItemManager : MonoBehaviour
             ITEM_STATE.BASIC => basicItem,
             ITEM_STATE.STAIR => stairItem,
             ITEM_STATE.ENERGY => energyItem,
+            ITEM_STATE.PICKAXE => pickaxeItem,
             _ => null
         };
     }

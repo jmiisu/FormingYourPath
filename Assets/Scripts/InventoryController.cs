@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,93 +7,173 @@ public class InventoryController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PlacementController placement;
+    [SerializeField] private ItemRegistrySO itemRegistry;
 
-    [Header("Inventory Buttons")]
-    [SerializeField] private Button[] itemUI;
+    [Header("Slots")]
+    [SerializeField] private InventorySlotUI[] slots;
 
-    [Header("Block Count UI")]
-    [SerializeField] private TMP_Text[] countText;
 
-    [Header("Block Count")]
+    private Dictionary<ITEM_STATE, int> itemCount;
     [SerializeField] private int basicCount = 4;
     [SerializeField] private int stairCount = 2;
+    [SerializeField] private int energyCount = 0;
 
-    private MAP_STATE selected = MAP_STATE.BASIC;
+    private ITEM_TYPE selected = ITEM_TYPE.BASIC;
 
     private void Awake()
     {
-        if (itemUI[0] != null) itemUI[0].onClick.AddListener(SelectBasic);
-        if (itemUI[1] != null) itemUI[1].onClick.AddListener(SelectStair);
+        foreach (InventorySlotUI slot in slots)
+        {
+            if (slot == null) continue;
+            slot.Bind(Select);
 
-        RefreshTextUI();
+            if (slot.ItemType == ITEM_TYPE.NONE) continue;
+
+            Sprite icon = itemRegistry.GetIcon(slot.ItemType);
+            slot.SetItem(slot.ItemType, icon);
+        }
     }
 
     private void Start()
     {
-        InventoryPoolComponent.i.InitPool(MAP_STATE.BASIC, basicCount);
-        InventoryPoolComponent.i.InitPool(MAP_STATE.STAIR, stairCount);
-        ValidateSelection();
-        RefreshTextUI();
+        if (ItemManager.i != null)
+        {
+            ItemManager.i.OnItemPicked -= HandleItemPicked;
+            ItemManager.i.OnItemPicked += HandleItemPicked;
+        }
+        InventoryPoolComponent.i.InitPool(ITEM_TYPE.BASIC, basicCount);
+        InventoryPoolComponent.i.InitPool(ITEM_TYPE.STAIR, stairCount);
+
+        RefreshUI();
+    }
+    private void OnEnable()
+    {
+        if (ItemManager.i != null) ItemManager.i.OnItemPicked += HandleItemPicked;
     }
 
-    public int GetCount(MAP_STATE state)
+    private void OnDisable()
     {
-        return state == MAP_STATE.BASIC ? basicCount : stairCount;
+        if (ItemManager.i != null) ItemManager.i.OnItemPicked -= HandleItemPicked;
     }
 
-    public bool TryConsume(MAP_STATE state)
+    public int GetEnergyCount() => energyCount; // 이동 횟수 증가 연결용
+    
+    private void HandleItemPicked(ITEM_STATE picked)
     {
-        if (state == MAP_STATE.BASIC)
+        ITEM_TYPE item = ItemDatabase.ToItemType(picked);
+        switch (item)
         {
-            if (basicCount <= 0) return false;
-            basicCount--;
+            case ITEM_TYPE.BASIC:
+                basicCount++;
+                InventoryPoolComponent.i?.InitPool(ITEM_TYPE.BASIC, 1);
+                break;
+            case ITEM_TYPE.STAIR:
+                stairCount++;
+                InventoryPoolComponent.i?.InitPool(ITEM_TYPE.STAIR, 1);
+                break;
+            case ITEM_TYPE.ENERGY:
+                energyCount++;
+                InventoryPoolComponent.i?.InitPool(ITEM_TYPE.ENERGY, 1);
+                //slots[2].SetItem(ITEM_TYPE.ENERGY, );
+                break;
+            case ITEM_TYPE.PICKAXE:
+                // 차후에 추가
+                break;
         }
-        else if (state == MAP_STATE.STAIR)
-        {
-            if (stairCount <= 0) return false;
-            stairCount--;
-        }
-        else return false;
 
-        RefreshTextUI();
+        EnsureSlotHasItem(item);
+
         ValidateSelection();
+        RefreshUI();
+    }
+
+    public bool TryConsume(ITEM_TYPE item)
+    {
+        switch (item)
+        {
+            case ITEM_TYPE.BASIC:
+                if (basicCount <= 0) return false;
+                basicCount--;
+                break;
+            case ITEM_TYPE.STAIR:
+                if (stairCount <= 0) return false;
+                stairCount--;
+                break;
+            default:
+                return false;
+        }
+
+        ValidateSelection();
+        RefreshUI();
         return true;
     }
 
-    public bool TryRetrieve(MAP_STATE state)
+    public bool TryRetrieve(ITEM_TYPE item)
     {
-        if (state == MAP_STATE.BASIC)
+        switch (item)
         {
-            basicCount++;
+            case ITEM_TYPE.BASIC: basicCount++; break;
+            case ITEM_TYPE.STAIR: stairCount++; break;
+            default: return false;
         }
-        else if (state == MAP_STATE.STAIR)
-        {
-            stairCount++;
-        }
-        else return false;
 
-        RefreshTextUI();
         ValidateSelection();
+        RefreshUI();
         return true;
+    }
+
+    public int GetCount(ITEM_TYPE item)
+    {
+        return item switch
+        {
+            ITEM_TYPE.BASIC => basicCount,
+            ITEM_TYPE.STAIR => stairCount,
+            ITEM_TYPE.ENERGY => energyCount,
+            _ => 0
+        };
+    }
+
+    private void EnsureSlotHasItem(ITEM_TYPE type)
+    {
+        if (itemRegistry == null) return;
+
+        InventorySlotUI slot = FindSlot(type);
+        if (slot == null) return;
+
+        if (slot.ItemType == type) return;
+
+        Sprite icon = itemRegistry.GetIcon(type);
+        slot.SetItem(type, icon);
+
+        slot.Bind(Select);
+    }
+
+    private void Select(ITEM_TYPE item)
+    {
+        if (GetCount(item) <= 0) return;
+
+        selected = item;
+        placement?.SetSelectedItem(selected);
+        RefreshUI();
     }
 
     private void ValidateSelection()
     {
         if (GetCount(selected) >= 0)
         {
-            placement?.SetSelectedBlock(selected);
+            placement?.SetSelectedItem(selected);
             return;
         }
 
         if (basicCount >= 0)
         {
-            selected = MAP_STATE.BASIC;
-            placement?.SetSelectedBlock(selected);
+            selected = ITEM_TYPE.BASIC;
+            placement?.SetSelectedItem(selected);
         }
         else if (stairCount >= 0)
         {
-            selected = MAP_STATE.STAIR;
-            placement?.SetSelectedBlock(selected);
+            selected = ITEM_TYPE.STAIR;
+            placement?.SetSelectedItem(selected);
         }
         else
         {
@@ -100,53 +181,108 @@ public class InventoryController : MonoBehaviour
         }
     }
 
-    public void SelectBasic()
+    private void RefreshUI()
     {
-        if (basicCount <= 0) return;
-        selected = MAP_STATE.BASIC;
+        if (slots == null) return;
 
-        placement?.SetSelectedBlock(MAP_STATE.BASIC);
+        foreach (InventorySlotUI slot in slots)
+        {
+            if (slot == null) continue;
 
-        RefreshHighlight();
+            int cnt = GetCount(slot.ItemType);
+            slot.SetCount(cnt);
+            slot.SetSelected(slot.ItemType == selected);
+        }
     }
 
-    public void SelectStair()
+    private InventorySlotUI FindSlot(ITEM_TYPE type)
     {
-        if (stairCount <= 0) return;
-        selected = MAP_STATE.STAIR;
+        foreach (InventorySlotUI slot in slots)
+        {
+            if (slot != null && slot.ItemType == type) return slot;
+        }
 
-        placement?.SetSelectedBlock(MAP_STATE.STAIR);
+        foreach (InventorySlotUI slot in slots)
+        {
+            if (slot != null && slot.ItemType == ITEM_TYPE.NONE) return slot;
+        }
 
-        RefreshHighlight();
+        return null;
     }
-
-    private void RefreshTextUI()
-    {
-        if (countText[0] != null) countText[0].text = basicCount.ToString();
-        if (countText[1] != null) countText[1].text = stairCount.ToString();
-
-        // 0개일 때 버튼 비활성화
-        if (itemUI[0] != null) itemUI[0].interactable = (basicCount > 0);
-        if (itemUI[1] != null) itemUI[1].interactable = (stairCount > 0);
-
-        RefreshHighlight();
-    }
-
-    private void RefreshHighlight()
-    {
-        // 버튼이 없으면 종료
-        if (itemUI == null || itemUI.Length < 2) return;
-
-        // 각 버튼의 Image를 하이라이트 대상으로 사용
-        Image basicImg = itemUI[0] != null ? itemUI[0].GetComponent<Image>() : null;
-        Image stairImg = itemUI[1] != null ? itemUI[1].GetComponent<Image>() : null;
-
-        // 색이 아니라 다른 방식(Outline/Animator) 쓰고 싶으면 여기만 바꾸면 됨
-        // 기본 색: 흰색, 선택 색: 약간 밝게
-        Color normal = Color.green;
-        Color selectedC = new Color(1f, 1f, 1f, 0.65f); // "하이라이트 느낌"만 주는 값(원하면 바꿔도 됨)
-
-        if (basicImg != null) basicImg.color = (selected == MAP_STATE.BASIC) ? selectedC : normal;
-        if (stairImg != null) stairImg.color = (selected == MAP_STATE.STAIR) ? selectedC : normal;
-    }
+    
 }
+//private void Start()
+//{
+//    if (ItemManager.i != null)
+//    {
+//        ItemManager.i.OnItemPicked += HandleItemPicked;
+//    }
+
+//    InventoryPoolComponent.i.InitPool(ITEM_TYPE.BASIC, basicCount);
+//    InventoryPoolComponent.i.InitPool(ITEM_TYPE.STAIR, stairCount);
+
+//    ValidateSelection();
+//    RefreshUI();
+//}
+//private void OnDestroy()
+//{
+//    if (ItemManager.i != null) ItemManager.i.OnItemPicked -= HandleItemPicked;
+//}
+
+
+
+
+
+
+
+//public void SelectBasic()
+//{
+//    if (basicCount <= 0) return;
+//    selected = MAP_STATE.BASIC;
+
+//    placement?.SetSelectedBlock(MAP_STATE.BASIC);
+
+//    RefreshUI();
+//}
+
+//public void SelectStair()
+//{
+//    if (stairCount <= 0) return;
+//    selected = MAP_STATE.STAIR;
+
+//    placement?.SetSelectedBlock(MAP_STATE.STAIR);
+
+//    RefreshUI();
+//}
+
+//private void RefreshTextUI()
+//{
+//    if (countText[0] != null) countText[0].text = basicCount.ToString();
+//    if (countText[1] != null) countText[1].text = stairCount.ToString();
+
+//    if (countText[2] != null) countText[2].text = energyCount.ToString();
+
+//    // 0개일 때 버튼 비활성화
+//    if (itemUI[0] != null) itemUI[0].interactable = (basicCount > 0);
+//    if (itemUI[1] != null) itemUI[1].interactable = (stairCount > 0);
+//    if (itemUI[2] != null) itemUI[2].interactable = (energyCount > 0);
+//    RefreshHighlight();
+//}
+
+//private void RefreshHighlight()
+//{
+//    // 버튼이 없으면 종료
+//    if (itemUI == null || itemUI.Length < 2) return;
+
+//    // 각 버튼의 Image를 하이라이트 대상으로 사용
+//    Image basicImg = itemUI[0] != null ? itemUI[0].GetComponent<Image>() : null;
+//    Image stairImg = itemUI[1] != null ? itemUI[1].GetComponent<Image>() : null;
+
+//    // 색이 아니라 다른 방식(Outline/Animator) 쓰고 싶으면 여기만 바꾸면 됨
+//    // 기본 색: 흰색, 선택 색: 약간 밝게
+//    Color normal = Color.green;
+//    Color selectedC = new Color(1f, 1f, 1f, 0.65f); // "하이라이트 느낌"만 주는 값(원하면 바꿔도 됨)
+
+//    if (basicImg != null) basicImg.color = (selected == MAP_STATE.BASIC) ? selectedC : normal;
+//    if (stairImg != null) stairImg.color = (selected == MAP_STATE.STAIR) ? selectedC : normal;
+//}

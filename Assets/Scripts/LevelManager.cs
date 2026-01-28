@@ -8,6 +8,9 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private GameObject[] mapTile;
     [SerializeField] private MoveController playerMove;
 
+    private int _mapWidth;
+    private int _mapHeight;
+
     // StageManager가 구독해서 다음 스테이지로 이동 처리
     public event Action OnStageCleared;
 
@@ -21,8 +24,6 @@ public class LevelManager : MonoBehaviour
     public Vector2Int SpawnCell { get; private set; }
     public bool HasSpawnCell { get; private set; }
 
-    private int _mapWidth;
-    private int _mapHeight;
 
     public float TileSize
     {
@@ -165,7 +166,7 @@ public class LevelManager : MonoBehaviour
         // 시작 셀을 넘겨서 플레이어 위치를 맵 좌표계에 맞게 스냅
         playerMove.SetStartCell(new Vector2Int(SpawnCell.x, SpawnCell.y), this);
     }
-
+    
     public void OnPlayerReachedExit()
     {
         Debug.Log("스테이지 클리어!");

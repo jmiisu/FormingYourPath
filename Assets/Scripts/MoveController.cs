@@ -68,6 +68,11 @@ public class MoveController : MonoBehaviour
         GetDirInput();
         if (!_isMoving && !_isJumping)
         {
+            TryPickupItemByInput();
+        }
+
+        if (!_isMoving && !_isJumping)
+        {
             if (!TryJumpMove())
             {
                 if (!TryStairDownFromUnderfoot()) TryWalkMove();
@@ -108,6 +113,14 @@ public class MoveController : MonoBehaviour
         );
     }
 
+    private void TryPickupItemByInput()
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            ItemManager.i?.TryPickup(cellPos);
+        }
+    }
+
     void UpdatePosition()
     {
         if (!_isMoving) return;
@@ -123,7 +136,7 @@ public class MoveController : MonoBehaviour
         if (dist < speed * Time.deltaTime)
         {
             transform.position = destPos;
-            ItemManager.i?.TryPickup(cellPos);
+            
             _isMoving = false;
             _isJumping = false;
 
