@@ -74,7 +74,6 @@ public class InventoryController : MonoBehaviour
             case ITEM_TYPE.ENERGY:
                 energyCount++;
                 InventoryPoolComponent.i?.InitPool(ITEM_TYPE.ENERGY, 1);
-                //slots[2].SetItem(ITEM_TYPE.ENERGY, );
                 break;
             case ITEM_TYPE.PICKAXE:
                 // 차후에 추가
@@ -210,6 +209,13 @@ public class InventoryController : MonoBehaviour
         return null;
     }
     
+    public bool TryConsumeEnergy()
+    {
+        if (energyCount <= 0) return false;
+        energyCount--;
+        RefreshUI();
+        return true;
+    }
 }
 //private void Start()
 //{

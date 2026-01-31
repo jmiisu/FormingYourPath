@@ -9,6 +9,10 @@ public enum DIRECTION
 public class MoveController : MonoBehaviour
 {
     [SerializeField] float speed = 1f;
+    [SerializeField] private int moveCost = 1;
+    [SerializeField] private int energyRestore = 5;
+    [SerializeField] private InventoryController inventory;
+    private StaminaComponent _stamina;
 
     Vector2Int cellPos = Vector2Int.zero;
     bool _isMoving = false;
@@ -44,6 +48,9 @@ public class MoveController : MonoBehaviour
 
     void Start()
     {
+        if (_stamina == null) _stamina = GetComponent<StaminaComponent>();
+        if (_stamina != null) FYPStaminaUI.i.Bind(_stamina);
+        //Debug.Log(_stamina);
         // 최소 수정: LevelManager가 SetStartCell로 덮어쓰는 구조지만,
         // 혹시 호출 타이밍이 꼬일 때를 대비해 참조만 잡아둠
         if (_level == null)
@@ -65,6 +72,13 @@ public class MoveController : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            if (_stamina != null && inventory != null)
+            {
+                if (inventory.TryConsumeEnergy()) _stamina.Restore(energyRestore);
+            }
+        }
         GetDirInput();
         if (!_isMoving && !_isJumping)
         {
@@ -254,6 +268,10 @@ public class MoveController : MonoBehaviour
 
     private void MoveTo(Vector2Int next)
     {
+        if (_stamina != null)
+        {
+            if (!_stamina.TrySpend(moveCost)) return;
+        }
         bool isExitMove = false;
         if (GridStateManager.i.TryGetState(next, out var state) && state == MAP_STATE.EXIT)
         {
