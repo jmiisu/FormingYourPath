@@ -37,6 +37,7 @@ public class LevelManager : MonoBehaviour
 
     public void LoadStage(int stageIdx)
     {
+        FYPSoundManager.i?.PlayBGM(E_BGM.TUTORIAL);
         _stageIndex = stageIdx;
 
         ClearLevelObjects();

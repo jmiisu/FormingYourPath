@@ -114,6 +114,7 @@ public class PlacementController : MonoBehaviour
         GameObject placed = InventoryPoolComponent.i.UseItem(selectedItem, worldPos, _level.transform);
         if (placed == null) return;
 
+        FYPSoundManager.i?.PlaySFX(E_SFX.PLACE);
         // 계단 방향 적용
         if (placedState == MAP_STATE.STAIR)
         {
@@ -210,6 +211,7 @@ public class PlacementController : MonoBehaviour
         {
             if (GridStateManager.i.TryRemovePlacedBlock(mouseCell, out var removedObj, out var removedState))
             {
+                FYPSoundManager.i?.PlaySFX(E_SFX.REMOVE);
                 //Debug.Log("REMOVED!");
                 if (removedObj != null)
                 {

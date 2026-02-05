@@ -76,7 +76,11 @@ public class MoveController : MonoBehaviour
         {
             if (_stamina != null && inventory != null)
             {
-                if (inventory.TryConsumeEnergy()) _stamina.Restore(energyRestore);
+                if (inventory.TryConsumeEnergy())
+                {
+                    _stamina.Restore(energyRestore);
+                    FYPSoundManager.i.PlaySFX(E_SFX.USE_ENERGY);
+                }
             }
         }
         GetDirInput();
@@ -272,6 +276,8 @@ public class MoveController : MonoBehaviour
         {
             if (!_stamina.TrySpend(moveCost)) return;
         }
+
+        FYPSoundManager.i?.PlaySFX(E_SFX.WALK);
         bool isExitMove = false;
         if (GridStateManager.i.TryGetState(next, out var state) && state == MAP_STATE.EXIT)
         {

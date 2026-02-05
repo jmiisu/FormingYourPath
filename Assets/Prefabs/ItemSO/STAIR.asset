@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: STAIR
   m_EditorClassIdentifier: 
   type: 2
-  icon: {fileID: -4477670974911738503, guid: 5d4816d05f8739144a7acf4fbefb3053, type: 3}
+  icon: {fileID: 2082669991739064150, guid: 1bdf50ed9d2d74f4689a952ca8de3c9e, type: 3}
   worldPrefab: {fileID: 9163637876504688543, guid: 8852136f47ea2ed4096d53cc73efce9e, type: 3}
   placeable: 1
   placeMapState: 3

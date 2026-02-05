@@ -52,6 +52,6 @@ public class FYPStaminaUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             fillImage.value = max - cur;
         }
 
-        if (tooltipText != null) tooltipText.text = $"{cur} / {max}";
+        if (tooltipText != null) tooltipText.text = $"{cur}/{max}";
     }
 }

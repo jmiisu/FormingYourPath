@@ -26,7 +26,11 @@ public class InventorySlotUI : MonoBehaviour
         if (btn == null) btn = GetComponent<Button>();
 
         btn.onClick.RemoveAllListeners();
-        btn.onClick.AddListener(() => onClick?.Invoke(itemType));
+        btn.onClick.AddListener(() => 
+        {
+            FYPSoundManager.i?.PlaySFX(E_SFX.BUTTON_CLICK);
+            onClick?.Invoke(itemType);
+        });
     }
     
     public void SetCount(int count)

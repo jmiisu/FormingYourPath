@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: BASIC
   m_EditorClassIdentifier: 
   type: 1
-  icon: {fileID: 21300000, guid: b5a7775934c76fd4d9e9b90b462b0e6c, type: 2}
+  icon: {fileID: 7460673060177896593, guid: 9655e1fcf1f67984bac88290eb615041, type: 3}
   worldPrefab: {fileID: 3989050554300751606, guid: 3a9fdb17f9976894ab3025d9c2f22ef2, type: 3}
   placeable: 1
   placeMapState: 2

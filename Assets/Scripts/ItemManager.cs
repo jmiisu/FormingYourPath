@@ -72,6 +72,8 @@ public class ItemManager : MonoBehaviour
         }
         _spawnedObjByCell.Remove(playerCell);
 
+        FYPSoundManager.i?.PlaySFX(E_SFX.ITEM_PICKUP);
+
         OnItemPicked?.Invoke(item);
         Debug.Log($"[ItemManager] Picked {item} at {playerCell}");
         //InventoryPoolComponent.i.RetreiveItem(ItemDatabase.ToItemType(item), obj);
