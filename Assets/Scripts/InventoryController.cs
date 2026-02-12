@@ -17,6 +17,7 @@ public class InventoryController : MonoBehaviour
     [SerializeField] private int basicCount = 4;
     [SerializeField] private int stairCount = 2;
     [SerializeField] private int energyCount = 0;
+    [SerializeField] private int pickaxeCount = 0;
 
     private ITEM_TYPE selected = ITEM_TYPE.BASIC;
 
@@ -45,6 +46,7 @@ public class InventoryController : MonoBehaviour
         InventoryPoolComponent.i.InitPool(ITEM_TYPE.STAIR, stairCount);
 
         RefreshUI();
+        Select(selected);
     }
     private void OnEnable()
     {
@@ -76,13 +78,37 @@ public class InventoryController : MonoBehaviour
                 InventoryPoolComponent.i?.InitPool(ITEM_TYPE.ENERGY, 1);
                 break;
             case ITEM_TYPE.PICKAXE:
-                // 차후에 추가
+                pickaxeCount++;
+                InventoryPoolComponent.i?.InitPool(ITEM_TYPE.PICKAXE, 1);
                 break;
         }
 
         EnsureSlotHasItem(item);
 
         ValidateSelection();
+        RefreshUI();
+    }
+
+    public void AddItem(ITEM_TYPE item, int amount)
+    {
+        if (amount <= 0) return;
+
+        switch (item)
+        {
+            case ITEM_TYPE.BASIC:
+                basicCount += amount;
+                InventoryPoolComponent.i?.InitPool(ITEM_TYPE.BASIC, amount);
+                break;
+            case ITEM_TYPE.STAIR:
+                stairCount += amount;
+                InventoryPoolComponent.i?.InitPool(ITEM_TYPE.STAIR, amount);
+                break;
+            default:
+                break;
+        }
+
+        EnsureSlotHasItem(item);
+        ValidateSelection(); 
         RefreshUI();
     }
 
@@ -128,6 +154,7 @@ public class InventoryController : MonoBehaviour
             ITEM_TYPE.BASIC => basicCount,
             ITEM_TYPE.STAIR => stairCount,
             ITEM_TYPE.ENERGY => energyCount,
+            ITEM_TYPE.PICKAXE => pickaxeCount,
             _ => 0
         };
     }

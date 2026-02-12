@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor.MPE;
 using UnityEngine;
 
@@ -80,14 +81,14 @@ public class GridStateManager : MonoBehaviour
         return true;
     }
 
-    //public bool SetState(Vector2Int cell, MAP_STATE newState)
-    //{
-    //    if (!IsInside(cell)) return false;
+    public bool SetState(Vector2Int cell, MAP_STATE newState)
+    {
+        if (!IsInside(cell)) return false;
 
-    //    _map[cell] = newState;
-    //    OnCellChanged?.Invoke(cell, newState);
-    //    return true;
-    //}
+        _map[cell] = newState;
+        OnCellChanged?.Invoke(cell, newState);
+        return true;
+    }
 
     public bool RegisterPlacedBlock(Vector2Int cell, MAP_STATE placedState, GameObject placedObj, out GameObject prevObj, out MAP_STATE prevState)
     {
@@ -162,6 +163,16 @@ public class GridStateManager : MonoBehaviour
         if (stair == null) return false;
 
         dir = stair.Dir;
+        return true;
+    }
+
+    public bool BreakStageBlock(Vector2Int cell)
+    {
+        if (!TryGetState(cell, out var state)) return false;
+        if (state != MAP_STATE.STAGE_BLOCK) return false;
+
+        SetState(cell, MAP_STATE.EMPTY);
+
         return true;
     }
 }
